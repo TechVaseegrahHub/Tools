@@ -51,7 +51,7 @@ const Transactions = () => {
       setFilteredTransactions(transactions);
     } else {
       const term = searchTerm.toLowerCase();
-      const filtered = transactions.filter(transaction => 
+      const filtered = transactions.filter(transaction =>
         transaction.toolName?.toLowerCase().includes(term) ||
         transaction.toolId?.toLowerCase().includes(term) ||
         transaction.userName?.toLowerCase().includes(term) ||
@@ -90,20 +90,20 @@ const Transactions = () => {
     if (!window.confirm('Are you sure you want to check in this tool?')) {
       return;
     }
-    
+
     try {
       setLoading(true);
-      const response = await axios.put(`/api/transactions/${transactionId}/checkin`);
-      
+      const response = await axios.put(`/api/transactions/${transactionId}/checkin`, {});
+
       // Add the check-in transaction to the list
       const checkInTransaction = {
         ...response.data,
         _id: `checkin-${Date.now()}`, // Create a unique ID for the check-in
       };
-      
+
       setTransactions(prev => [checkInTransaction, ...prev]);
       setFilteredTransactions(prev => [checkInTransaction, ...prev]);
-      
+
       toast.success('Tool checked in successfully!');
     } catch (error) {
       console.error('Failed to check in tool', error);
@@ -188,7 +188,7 @@ const Transactions = () => {
               className="input-field pl-10"
             />
           </div>
-          
+
           <button
             onClick={handleRefresh}
             className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
@@ -198,7 +198,7 @@ const Transactions = () => {
           </button>
 
           {canManage && (
-            <button 
+            <button
               onClick={handleOpenModal}
               className="btn-primary flex items-center"
             >
@@ -207,7 +207,7 @@ const Transactions = () => {
           )}
         </div>
       </div>
-      
+
       {/* Transactions Table */}
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
@@ -216,8 +216,8 @@ const Transactions = () => {
               <tr className="text-left">
                 <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Tool</th>
                 <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">User</th>
-                <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Action</th>
-                <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Event Timestamp</th>
+                <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Checked Out</th>
+                <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Checked In</th>
                 <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Due Date</th>
                 <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                 {canManage && (
@@ -257,13 +257,23 @@ const Transactions = () => {
                       <div className="font-medium text-gray-900">{transaction.userName}</div>
                       <div className="text-sm text-gray-500">{transaction.userEmail}</div>
                     </td>
-                    <td className="py-3 px-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getActionBadgeClass(transaction.action)}`}>
-                        {transaction.action}
-                      </span>
+                    <td className="py-3 px-4 text-sm text-gray-700">
+                      {transaction.checkoutDate ? (
+                        <div>
+                          <div className="font-medium">{formatDateTime(transaction.checkoutDate)}</div>
+                        </div>
+                      ) : (
+                        <div className="text-gray-400">—</div>
+                      )}
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-700">
-                      {formatDateTime(transaction.eventTimestamp)}
+                      {transaction.checkinDate ? (
+                        <div>
+                          <div className="font-medium">{formatDateTime(transaction.checkinDate)}</div>
+                        </div>
+                      ) : (
+                        <div className="text-gray-400">—</div>
+                      )}
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-700">
                       {transaction.dueDate ? formatDateTime(transaction.dueDate) : '—'}
@@ -275,12 +285,12 @@ const Transactions = () => {
                     </td>
                     {canManage && (
                       <td className="py-3 px-4">
-                        {transaction.action === 'Checked Out' && (
+                        {transaction.action === 'Checked Out' && transaction.status !== 'Available' && (
                           <button
                             onClick={() => handleCheckIn(transaction._id)}
-                            className="btn-primary text-sm"
+                            className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                           >
-                            Check In
+                            <FiArrowLeft className="mr-1 h-4 w-4" /> Check In
                           </button>
                         )}
                       </td>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FiX, FiPlus, FiTool, FiTag, FiInfo, FiCalendar, FiMapPin, FiSave, FiImage } from 'react-icons/fi';
+import { FiX, FiPlus, FiTool, FiTag, FiInfo, FiCalendar, FiMapPin, FiSave, FiImage, FiCamera } from 'react-icons/fi';
 import ImageEditor from './ImageEditor';
+import CameraCapture from './CameraCapture';
 
 const ToolFormModal = ({ tool, onSave, onClose, userRole }) => {
   const [formData, setFormData] = useState({
@@ -19,6 +20,7 @@ const ToolFormModal = ({ tool, onSave, onClose, userRole }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [useImageEditor, setUseImageEditor] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
 
   const isEditMode = !!tool;
 
@@ -60,6 +62,11 @@ const ToolFormModal = ({ tool, onSave, onClose, userRole }) => {
     setFormData((prev) => ({ ...prev, image: imageUrl }));
   };
 
+  const handleCameraCapture = (imageDataUrl) => {
+    setFormData((prev) => ({ ...prev, image: imageDataUrl }));
+    setShowCamera(false);
+  };
+
   const handleCategoryChange = (e) => {
     const { value } = e.target;
     if (value === 'new') {
@@ -72,15 +79,23 @@ const ToolFormModal = ({ tool, onSave, onClose, userRole }) => {
   };
 
   const handleSaveNewCategory = async () => {
-    if (!newCategoryName) return;
+    if (!newCategoryName || !newCategoryName.trim()) {
+      toast.error('Please enter a category name');
+      return;
+    }
+
     try {
-      const { data: newCategory } = await axios.post('/api/categories', { name: newCategoryName });
+      const { data: newCategory } = await axios.post('/api/categories', { name: newCategoryName.trim() });
       setCategories((prev) => [...prev, newCategory]);
       setFormData((prev) => ({ ...prev, category: newCategory._id }));
       setNewCategoryName('');
       setShowNewCategory(false);
+      setError(null); // Clear any previous errors
+      toast.success(`Category "${newCategory.name}" created successfully!`);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create category');
+      const errorMsg = err.response?.data?.message || 'Failed to create category';
+      setError(errorMsg);
+      toast.error(errorMsg);
     }
   };
 
@@ -127,7 +142,7 @@ const ToolFormModal = ({ tool, onSave, onClose, userRole }) => {
             <FiX className="h-5 w-5" />
           </button>
         </div>
-        
+
         <div className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -212,21 +227,42 @@ const ToolFormModal = ({ tool, onSave, onClose, userRole }) => {
 
             {/* Create New Category Inline Form */}
             {showNewCategory && !isReadOnly && (
-              <div className="card p-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm font-medium text-blue-900 mb-3">Create New Category</p>
                 <div className="flex items-center gap-3">
                   <input
                     type="text"
-                    placeholder="New category name"
+                    placeholder="Enter category name"
                     value={newCategoryName}
-                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    onChange={(e) => {
+                      setNewCategoryName(e.target.value);
+                      if (error) setError(null); // Clear error when user starts typing
+                    }}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSaveNewCategory();
+                      }
+                    }}
                     className="input-field flex-1"
+                    autoFocus
                   />
                   <button
                     type="button"
                     onClick={handleSaveNewCategory}
-                    className="btn-primary flex items-center"
+                    className="btn-primary flex items-center whitespace-nowrap"
                   >
                     <FiPlus className="mr-2" /> Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewCategory(false);
+                      setNewCategoryName('');
+                    }}
+                    className="btn-outline whitespace-nowrap"
+                  >
+                    Cancel
                   </button>
                 </div>
               </div>
@@ -268,28 +304,32 @@ const ToolFormModal = ({ tool, onSave, onClose, userRole }) => {
 
             {/* Enhanced Image Section */}
             <div>
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <label htmlFor="image" className="block text-sm font-medium text-gray-700 flex items-center">
-                  <FiImage className="mr-2 h-4 w-4" /> Image
+                  <FiImage className="mr-2 h-4 w-4" /> Tool Image
                 </label>
                 <button
                   type="button"
                   onClick={() => setUseImageEditor(!useImageEditor)}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                    useImageEditor 
-                      ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`text-xs px-3 py-1 rounded-full transition-colors ${useImageEditor ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   {useImageEditor ? 'Use Simple Input' : 'Use Image Editor'}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCamera(true)}
+                  className="text-xs px-3 py-1 rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors flex items-center"
+                >
+                  <FiCamera className="mr-1 h-3 w-3" /> Capture from Camera
+                </button>
               </div>
-              
+
               {useImageEditor ? (
                 <ImageEditor
                   imageUrl={formData.image}
                   onChange={handleImageChange}
-                  aspectRatio={4/3}
+                  aspectRatio={4 / 3}
                   className="border rounded-lg"
                 />
               ) : (
@@ -307,9 +347,9 @@ const ToolFormModal = ({ tool, onSave, onClose, userRole }) => {
                   {formData.image && (
                     <div className="mt-3">
                       <div className="text-xs text-gray-500 mb-2">Preview:</div>
-                      <img 
-                        src={formData.image} 
-                        alt="Tool preview" 
+                      <img
+                        src={formData.image}
+                        alt="Tool preview"
                         className="w-32 h-32 object-cover rounded-lg border"
                         onError={(e) => {
                           e.target.onerror = null;
@@ -364,6 +404,14 @@ const ToolFormModal = ({ tool, onSave, onClose, userRole }) => {
           </form>
         </div>
       </div>
+
+      {/* Camera Capture Modal */}
+      {showCamera && (
+        <CameraCapture
+          onCapture={handleCameraCapture}
+          onClose={() => setShowCamera(false)}
+        />
+      )}
     </div>
   );
 };

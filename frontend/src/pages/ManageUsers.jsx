@@ -3,12 +3,15 @@ import axios from 'axios';
 import { FiPlus, FiUser, FiUsers, FiEdit, FiTrash2, FiSearch, FiRefreshCw } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import UserFormModal from '../components/UserFormModal';
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredUsers, setFilteredUsers] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
 
   const { user: currentUser } = useAuth();
 
@@ -48,7 +51,7 @@ const ManageUsers = () => {
       setFilteredUsers(users);
     } else {
       const term = searchTerm.toLowerCase();
-      const filtered = users.filter(user => 
+      const filtered = users.filter(user =>
         user.name?.toLowerCase().includes(term) ||
         user.email?.toLowerCase().includes(term) ||
         user.role?.toLowerCase().includes(term)
@@ -80,11 +83,34 @@ const ManageUsers = () => {
     fetchUsers();
   };
 
+  const handleOpenModal = (user = null) => {
+    setEditingUser(user);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setEditingUser(null);
+    setIsModalOpen(false);
+  };
+
+  const handleSaveUser = (savedUser) => {
+    if (editingUser) {
+      // Update existing user in state
+      setUsers(users.map(u => u._id === savedUser._id ? savedUser : u));
+      setFilteredUsers(filteredUsers.map(u => u._id === savedUser._id ? savedUser : u));
+    } else {
+      // Add new user to state
+      setUsers([savedUser, ...users]);
+      setFilteredUsers([savedUser, ...filteredUsers]);
+    }
+    handleCloseModal();
+  };
+
   const handleDeleteUser = async (id) => {
     if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       return;
     }
-    
+
     try {
       await axios.delete(`/api/users/${id}`);
       setUsers(users.filter(user => user._id !== id));
@@ -129,7 +155,7 @@ const ManageUsers = () => {
               className="input-field pl-10"
             />
           </div>
-          
+
           <button
             onClick={handleRefresh}
             className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
@@ -138,12 +164,15 @@ const ManageUsers = () => {
             <FiRefreshCw className="h-5 w-5" />
           </button>
 
-          <button className="btn-primary flex items-center">
+          <button
+            onClick={() => handleOpenModal()}
+            className="btn-primary flex items-center"
+          >
             <FiPlus className="mr-2" /> Add User
           </button>
         </div>
       </div>
-      
+
       {/* Users Table */}
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
@@ -175,7 +204,10 @@ const ManageUsers = () => {
                       <p className="text-gray-600">
                         {searchTerm ? 'No users match your search.' : 'No users found.'}
                       </p>
-                      <button className="mt-3 btn-primary flex items-center">
+                      <button
+                        onClick={() => handleOpenModal()}
+                        className="mt-3 btn-primary flex items-center"
+                      >
                         <FiPlus className="mr-2" /> Add Your First User
                       </button>
                     </div>
@@ -209,6 +241,7 @@ const ManageUsers = () => {
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
                         <button
+                          onClick={() => handleOpenModal(user)}
                           className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
                           title="Edit User"
                         >
@@ -232,6 +265,15 @@ const ManageUsers = () => {
           </table>
         </div>
       </div>
+
+      {/* User Form Modal */}
+      {isModalOpen && (
+        <UserFormModal
+          user={editingUser}
+          onSave={handleSaveUser}
+          onClose={handleCloseModal}
+        />
+      )}
     </div>
   );
 };

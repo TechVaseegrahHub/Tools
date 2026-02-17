@@ -33,7 +33,7 @@ export const getOverdueTools = async (req, res) => {
   try {
     // This is a simplified version - you might need to adjust based on your actual logic for determining overdue tools
     const overdueTools = await Tool.find({ status: 'Overdue' }).limit(10);
-    
+
     res.json(overdueTools);
   } catch (error) {
     console.error('Error in getOverdueTools:', error);
@@ -51,13 +51,13 @@ export const getRecentActivity = async (req, res) => {
       .populate('user', 'name')
       .sort({ createdAt: -1 })
       .limit(10);
-    
+
     const recentActivity = recentTransactions.map(transaction => ({
       action: transaction.type === 'checkout' ? 'Tool Checked Out' : 'Tool Returned',
-      description: `${transaction.user.name} ${transaction.type === 'checkout' ? 'checked out' : 'returned'} ${transaction.tool.toolName}`,
+      description: `${transaction.user?.name || 'Unknown User'} ${transaction.type === 'checkout' ? 'checked out' : 'returned'} ${transaction.tool?.toolName || 'Unknown Tool'}`,
       time: transaction.createdAt
     }));
-    
+
     res.json(recentActivity);
   } catch (error) {
     console.error('Error in getRecentActivity:', error);

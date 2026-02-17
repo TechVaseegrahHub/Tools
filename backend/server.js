@@ -19,7 +19,8 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors()); // Allows cross-origin requests
-app.use(express.json()); // Allows parsing of JSON request bodies
+app.use(express.json({ limit: '50mb' })); // Allows parsing of JSON request bodies with 50MB limit for images
+app.use(express.urlencoded({ limit: '50mb', extended: true })); // Support URL-encoded bodies
 
 // --- Database Connection ---
 console.log('Attempting to connect to MongoDB...');
@@ -28,11 +29,11 @@ console.log('MONGO_URI:', process.env.MONGO_URI ? 'Loaded' : 'Not found');
 mongoose.connect(process.env.MONGO_URI, {
   // Removed deprecated options
 })
-.then(() => console.log('Successfully connected to MongoDB.'))
-.catch(err => {
-  console.error('Database connection error:', err);
-  // Don't exit here, let's start the server anyway for testing
-});
+  .then(() => console.log('Successfully connected to MongoDB.'))
+  .catch(err => {
+    console.error('Database connection error:', err);
+    // Don't exit here, let's start the server anyway for testing
+  });
 
 // --- API Routes ---
 app.get('/api', (req, res) => {
@@ -61,13 +62,13 @@ const scheduleOverdueCheck = () => {
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);
-  
+
   const timeUntilMidnight = tomorrow.getTime() - now.getTime();
-  
+
   setTimeout(() => {
     // Run the check immediately when the timeout completes
     checkOverdueTools();
-    
+
     // Then set up a daily interval
     setInterval(checkOverdueTools, 24 * 60 * 60 * 1000); // 24 hours
   }, timeUntilMidnight);
