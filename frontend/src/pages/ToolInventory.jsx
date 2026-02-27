@@ -5,19 +5,51 @@ import { useAuth } from '../context/AuthContext';
 import ToolFormModal from '../components/ToolFormModal';
 import { toast } from 'react-toastify';
 
+// Skeleton card shown while loading
+const SkeletonCard = () => (
+  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-pulse">
+    <div className="w-full h-48 bg-gray-200" />
+    <div className="p-4 space-y-3">
+      <div className="h-4 bg-gray-200 rounded w-3/4" />
+      <div className="h-3 bg-gray-100 rounded w-1/2" />
+      <div className="h-3 bg-gray-100 rounded w-2/3" />
+      <div className="flex gap-2 mt-4">
+        <div className="h-8 bg-gray-200 rounded flex-1" />
+        <div className="h-8 w-8 bg-gray-200 rounded" />
+      </div>
+    </div>
+  </div>
+);
+
+const SkeletonRow = () => (
+  <tr className="animate-pulse">
+    {[...Array(7)].map((_, i) => (
+      <td key={i} className="py-3 px-4">
+        <div className="h-4 bg-gray-200 rounded w-full" />
+      </td>
+    ))}
+  </tr>
+);
+
 const ToolInventory = () => {
-  const [tools, setTools] = useState([]); // Initial state is an empty array
+  const [tools, setTools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTool, setEditingTool] = useState(null); // Tool to edit
+  const [editingTool, setEditingTool] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('grid');
   const [favorites, setFavorites] = useState(new Set());
 
-  const { user } = useAuth(); // Get user role
-  const canManage = user?.role === 'Admin' || user?.role === 'Manager'; // Added optional chaining for safety
-  const isAdmin = user?.role === 'Admin'; // Added optional chaining for safety
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const ITEMS_PER_PAGE = 8;
+
+  const { user } = useAuth();
+  const canManage = user?.role === 'Admin' || user?.role === 'Manager';
+  const isAdmin = user?.role === 'Admin';
 
   // Toggle favorite status
   const toggleFavorite = (toolId) => {
@@ -32,45 +64,65 @@ const ToolInventory = () => {
     });
   };
 
-  const fetchTools = async () => {
+  // Silently prefetch a page into the backend cache — fire and forget
+  const silentPrefetch = (page, search = searchTerm) => {
+    if (page < 1) return;
+    axios.get(`/api/tools?search=${encodeURIComponent(search)}&page=${page}&limit=${ITEMS_PER_PAGE}`)
+      .catch(() => { }); // ignore errors — best-effort only
+  };
+
+  const fetchTools = async (page = currentPage) => {
     try {
       setLoading(true);
-      setError(null); // Clear previous errors
-      const { data } = await axios.get(`/api/tools?search=${searchTerm}`);
+      setError(null);
+      const { data } = await axios.get(
+        `/api/tools?search=${encodeURIComponent(searchTerm)}&page=${page}&limit=${ITEMS_PER_PAGE}`
+      );
 
-      // *** Correction: Ensure data is an array before setting state ***
-      if (Array.isArray(data)) {
-        setTools(data);
+      if (data && Array.isArray(data.tools)) {
+        setTools(data.tools);
+        setTotalPages(data.totalPages || 1);
+        setTotalCount(data.totalCount || 0);
+        setCurrentPage(data.currentPage || 1);
+
+        // Prefetch next + prev pages into backend cache while user reads this page
+        silentPrefetch(page + 1, searchTerm);
+        if (page > 1) silentPrefetch(page - 1, searchTerm);
       } else {
-        console.error("API did not return an array:", data);
-        setTools([]); // Default to empty array if response is not valid
+        setTools([]);
         setError('Received invalid data from server.');
         toast.error('Received invalid data from server.');
       }
     } catch (err) {
-      const errorMessage = 'Failed to fetch tools';
-      setError(errorMessage);
+      setError('Failed to fetch tools');
       console.error('API Error:', err);
-      setTools([]); // Ensure tools is an array even on error
-      toast.error(errorMessage);
+      setTools([]);
+      toast.error('Failed to fetch tools');
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch tools on mount and when searchTerm changes
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
+    setCurrentPage(newPage);
+    fetchTools(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Reset to page 1 when searchTerm changes, then fetch
   useEffect(() => {
-    // Check if user exists before fetching, avoids unnecessary fetch if logged out
     if (user) {
-        const delayDebounce = setTimeout(() => {
-          fetchTools();
-        }, 300); // Debounce search
-        return () => clearTimeout(delayDebounce);
+      const delayDebounce = setTimeout(() => {
+        setCurrentPage(1);
+        fetchTools(1);
+      }, 300);
+      return () => clearTimeout(delayDebounce);
     } else {
-        setLoading(false); // If no user, stop loading
-        setTools([]); // Ensure tools is empty if no user
+      setLoading(false);
+      setTools([]);
     }
-  }, [searchTerm, user]); // Added user dependency
+  }, [searchTerm, user]);
 
   const handleOpenModal = (tool = null) => {
     setEditingTool(tool);
@@ -114,7 +166,7 @@ const ToolInventory = () => {
   };
 
   const handleRefresh = () => {
-    fetchTools();
+    fetchTools(currentPage);
     toast.info('Tools refreshed');
   };
 
@@ -158,9 +210,9 @@ const ToolInventory = () => {
       {/* Image Section */}
       <div className="relative">
         {tool.image ? (
-          <img 
-            src={tool.image} 
-            alt={tool.toolName} 
+          <img
+            src={tool.image}
+            alt={tool.toolName}
             className="w-full h-48 object-cover"
             onError={(e) => {
               e.target.onerror = null;
@@ -172,19 +224,18 @@ const ToolInventory = () => {
             <FiTool className="h-12 w-12 text-gray-400" />
           </div>
         )}
-        
+
         {/* Favorite Button */}
         <button
           onClick={() => toggleFavorite(tool._id)}
-          className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all duration-200 ${
-            favorites.has(tool._id) 
-              ? 'bg-red-500 text-white hover:bg-red-600' 
-              : 'bg-white/80 text-gray-600 hover:bg-white hover:text-red-500'
-          }`}
+          className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all duration-200 ${favorites.has(tool._id)
+            ? 'bg-red-500 text-white hover:bg-red-600'
+            : 'bg-white/80 text-gray-600 hover:bg-white hover:text-red-500'
+            }`}
         >
           <FiHeart className={`h-4 w-4 ${favorites.has(tool._id) ? 'fill-current' : ''}`} />
         </button>
-        
+
         {/* Status Badge */}
         <div className="absolute bottom-3 left-3">
           <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor(tool.status)}`}>
@@ -192,30 +243,30 @@ const ToolInventory = () => {
           </span>
         </div>
       </div>
-      
+
       {/* Content Section */}
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
           <h3 className="font-semibold text-gray-900 text-lg line-clamp-1">{tool.toolName}</h3>
         </div>
-        
+
         <div className="space-y-2 mb-4">
           <div className="flex items-center text-sm text-gray-600">
             <span className="font-medium text-gray-900 mr-2">ID:</span>
             <span className="font-mono bg-gray-100 px-2 py-1 rounded">{tool.toolId}</span>
           </div>
-          
+
           <div className="flex items-center text-sm text-gray-600">
             <span className="font-medium text-gray-900 mr-2">Category:</span>
             <span>{tool.category?.name || 'N/A'}</span>
           </div>
-          
+
           <div className="flex items-center text-sm text-gray-600">
             <span className="font-medium text-gray-900 mr-2">Location:</span>
             <span>{tool.location || 'N/A'}</span>
           </div>
         </div>
-        
+
         {/* Action Buttons */}
         <div className="flex gap-2">
           <button
@@ -226,7 +277,7 @@ const ToolInventory = () => {
             {canManage ? <FiEdit className="h-4 w-4" /> : <FiSearch className="h-4 w-4" />}
             {canManage ? 'Edit' : 'View'}
           </button>
-          
+
           {isAdmin && (
             <button
               onClick={() => handleDeleteTool(tool._id)}
@@ -309,10 +360,28 @@ const ToolInventory = () => {
 
       {/* Tools Display */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <p className="text-gray-600">Loading tools...</p>
-        </div>
+        viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(ITEMS_PER_PAGE)].map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : (
+          <div className="card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px]">
+                <thead className="bg-gray-50">
+                  <tr className="text-left">
+                    {['Image', 'Tool Name', 'Tool ID', 'Category', 'Status', 'Location', 'Actions'].map(h => (
+                      <th key={h} className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {[...Array(ITEMS_PER_PAGE)].map((_, i) => <SkeletonRow key={i} />)}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
       ) : tools.length === 0 ? (
         <div className="text-center py-12">
           <div className="flex flex-col items-center justify-center">
@@ -336,7 +405,7 @@ const ToolInventory = () => {
           {/* Results Count */}
           <div className="mb-4 flex items-center justify-between">
             <p className="text-sm text-gray-600">
-              Showing <span className="font-medium">{tools.length}</span> {tools.length === 1 ? 'tool' : 'tools'}
+              Showing <span className="font-medium">{tools.length}</span> of <span className="font-medium">{totalCount}</span> {totalCount === 1 ? 'tool' : 'tools'}
               {searchTerm && ` for "${searchTerm}"`}
             </p>
             {favorites.size > 0 && (
@@ -375,9 +444,9 @@ const ToolInventory = () => {
                       <tr key={tool._id} className="hover:bg-gray-50">
                         <td className="py-3 px-4">
                           {tool.image ? (
-                            <img 
-                              src={tool.image} 
-                              alt={tool.toolName} 
+                            <img
+                              src={tool.image}
+                              alt={tool.toolName}
                               className="w-12 h-12 object-cover rounded-lg border"
                               onError={(e) => {
                                 e.target.onerror = null;
@@ -427,6 +496,52 @@ const ToolInventory = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                ← Prev
+              </button>
+
+              {/* Page number buttons */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
+                .reduce((acc, p, idx, arr) => {
+                  if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map((item, idx) =>
+                  item === '...' ? (
+                    <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">…</span>
+                  ) : (
+                    <button
+                      key={item}
+                      onClick={() => handlePageChange(item)}
+                      className={`w-10 h-10 text-sm font-medium rounded-lg border transition-colors ${item === currentPage
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                    >
+                      {item}
+                    </button>
+                  )
+                )
+              }
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Next →
+              </button>
             </div>
           )}
         </>

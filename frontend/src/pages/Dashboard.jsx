@@ -14,7 +14,7 @@ const StatCard = ({ title, value, icon, color = 'primary', trend }) => {
     red: 'text-rose-600 bg-rose-50 border-rose-100',
     purple: 'text-violet-600 bg-violet-50 border-violet-100'
   };
-  
+
   const iconColorClasses = {
     primary: 'text-blue-600',
     secondary: 'text-indigo-600',
@@ -65,7 +65,7 @@ const ToolCard = ({ tool, status }) => {
 
   // Handle the actual status from the tool data
   const actualStatus = tool.status?.toLowerCase().replace(' ', '') || status;
-  
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm transition-shadow duration-200">
       <div className="flex items-start justify-between">
@@ -111,7 +111,6 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    // Fetch all dashboard data
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -119,19 +118,18 @@ const Dashboard = () => {
           axios.get('/api/dashboard/stats'),
           axios.get('/api/dashboard/overdue'),
           axios.get('/api/dashboard/recent'),
-          axios.get('/api/tools')
+          axios.get('/api/tools?page=1&limit=6')
         ]);
         setStats(statsRes.data);
         setOverdue(ensureArray(overdueRes.data));
         setRecent(ensureArray(recentRes.data));
-        // Ensure tools data is properly formatted
-        const toolsData = ensureArray(toolsRes.data).slice(0, 6);
-        console.log('Tools data:', toolsData); // For debugging
-        setTools(toolsData);
+        // /api/tools now returns { tools, totalCount, ... }
+        const toolsPayload = toolsRes.data;
+        const toolsArray = Array.isArray(toolsPayload) ? toolsPayload : ensureArray(toolsPayload?.tools);
+        setTools(toolsArray.slice(0, 6));
       } catch (error) {
         console.error('Failed to fetch dashboard data', error);
         toast.error('Failed to fetch dashboard data');
-        // Set defaults to prevent errors
         setOverdue([]);
         setRecent([]);
         setTools([]);
@@ -142,13 +140,41 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+  // Skeleton placeholders
+  const StatSkeleton = () => (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-pulse">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 space-y-2">
+          <div className="h-3 bg-gray-200 rounded w-24" />
+          <div className="h-8 bg-gray-200 rounded w-16 mt-2" />
+        </div>
+        <div className="p-3 bg-gray-100 rounded-lg w-12 h-12" />
       </div>
-    );
-  }
+    </div>
+  );
+
+  const ToolSkeleton = () => (
+    <div className="bg-white rounded-lg border border-gray-200 p-4 animate-pulse">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 space-y-2">
+          <div className="h-4 bg-gray-200 rounded w-3/4" />
+          <div className="h-3 bg-gray-100 rounded w-1/2" />
+          <div className="h-3 bg-gray-100 rounded w-1/3" />
+        </div>
+        <div className="h-6 w-20 bg-gray-200 rounded-full" />
+      </div>
+    </div>
+  );
+
+  const ActivitySkeleton = () => (
+    <div className="flex items-start p-4 animate-pulse">
+      <div className="w-9 h-9 bg-gray-200 rounded-lg shrink-0" />
+      <div className="ml-4 flex-1 space-y-2">
+        <div className="h-4 bg-gray-200 rounded w-1/3" />
+        <div className="h-3 bg-gray-100 rounded w-2/3" />
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-8">
@@ -168,34 +194,16 @@ const Dashboard = () => {
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Overview</h2>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard 
-            title="Total Tools" 
-            value={stats?.totalTools || 0} 
-            icon={<FiTool />} 
-            color="primary"
-            trend={{ positive: true, value: 12 }}
-          />
-          <StatCard 
-            title="Available" 
-            value={stats?.toolsAvailable || 0} 
-            icon={<FiCheckCircle />} 
-            color="green"
-            trend={{ positive: true, value: 8 }}
-          />
-          <StatCard 
-            title="Checked Out" 
-            value={stats?.toolsCheckedOut || 0} 
-            icon={<FiActivity />} 
-            color="amber"
-            trend={{ positive: false, value: 3 }}
-          />
-          <StatCard 
-            title="Overdue" 
-            value={stats?.toolsOverdue || 0} 
-            icon={<FiAlertTriangle />} 
-            color="red"
-            trend={{ positive: false, value: 5 }}
-          />
+          {loading ? (
+            [...Array(4)].map((_, i) => <StatSkeleton key={i} />)
+          ) : (
+            <>
+              <StatCard title="Total Tools" value={stats?.totalTools || 0} icon={<FiTool />} color="primary" trend={{ positive: true, value: 12 }} />
+              <StatCard title="Available" value={stats?.toolsAvailable || 0} icon={<FiCheckCircle />} color="green" trend={{ positive: true, value: 8 }} />
+              <StatCard title="Checked Out" value={stats?.toolsCheckedOut || 0} icon={<FiActivity />} color="yellow" trend={{ positive: false, value: 3 }} />
+              <StatCard title="Overdue" value={stats?.toolsOverdue || 0} icon={<FiAlertTriangle />} color="red" trend={{ positive: false, value: 5 }} />
+            </>
+          )}
         </div>
       </div>
 
@@ -203,7 +211,7 @@ const Dashboard = () => {
       <div>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Recent Tools</h2>
-          <button 
+          <button
             onClick={handleViewAllTools}
             className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center hover:underline"
           >
@@ -211,16 +219,16 @@ const Dashboard = () => {
             <FiTrendingUp className="ml-1 h-4 w-4" />
           </button>
         </div>
-        {tools.length > 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => <ToolSkeleton key={i} />)}
+          </div>
+        ) : tools.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {tools.map((tool, index) => {
-              // Add defensive check for tool object
-              if (!tool || typeof tool !== 'object') {
-                console.warn('Invalid tool data at index', index, ':', tool);
-                return null;
-              }
+              if (!tool || typeof tool !== 'object') return null;
               return (
-                <ToolCard 
+                <ToolCard
                   key={tool._id || index}
                   tool={tool}
                   status={tool.status?.toLowerCase().replace(' ', '') || 'available'}
@@ -252,7 +260,7 @@ const Dashboard = () => {
               {overdue.length} items
             </span>
           </div>
-          
+
           {overdue.length === 0 ? (
             <div className="text-center py-12">
               <div className="p-3 bg-emerald-100 rounded-full w-16 h-16 mx-auto">
@@ -282,7 +290,7 @@ const Dashboard = () => {
               ))}
               {overdue.length > 5 && (
                 <div className="text-center pt-4">
-                  <button 
+                  <button
                     onClick={handleViewAllTools}
                     className="text-rose-600 hover:text-rose-800 font-medium text-sm hover:underline"
                   >
@@ -293,7 +301,7 @@ const Dashboard = () => {
             </div>
           )}
         </div>
-        
+
         {/* Recent Activity Card */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-6">
@@ -307,8 +315,12 @@ const Dashboard = () => {
               {recent.length} events
             </span>
           </div>
-          
-          {recent.length === 0 ? (
+
+          {loading ? (
+            <div className="space-y-1">
+              {[...Array(5)].map((_, i) => <ActivitySkeleton key={i} />)}
+            </div>
+          ) : recent.length === 0 ? (
             <div className="text-center py-12">
               <div className="p-3 bg-gray-100 rounded-full w-16 h-16 mx-auto">
                 <FiActivity className="h-10 w-10 text-gray-400 mx-auto" />
@@ -344,7 +356,7 @@ const Dashboard = () => {
               ))}
               {recent.length > 5 && (
                 <div className="text-center pt-4">
-                  <button 
+                  <button
                     onClick={() => navigate('/transactions')}
                     className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
                   >

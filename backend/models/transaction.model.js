@@ -32,5 +32,9 @@ const transactionSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+// Index for fast "recent transactions" query on the dashboard
+transactionSchema.index({ _id: -1 });
+transactionSchema.index({ tool: 1, type: 1 });
+
 const Transaction = mongoose.model('Transaction', transactionSchema);
 export default Transaction;

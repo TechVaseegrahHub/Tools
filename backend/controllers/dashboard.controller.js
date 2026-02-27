@@ -32,7 +32,7 @@ export const getDashboardStats = async (req, res) => {
 export const getOverdueTools = async (req, res) => {
   try {
     // This is a simplified version - you might need to adjust based on your actual logic for determining overdue tools
-    const overdueTools = await Tool.find({ status: 'Overdue' }).limit(10);
+    const overdueTools = await Tool.find({ status: 'Overdue' }).sort({ _id: -1 }).limit(10);
 
     res.json(overdueTools);
   } catch (error) {
@@ -49,7 +49,7 @@ export const getRecentActivity = async (req, res) => {
     const recentTransactions = await Transaction.find()
       .populate('tool', 'toolName')
       .populate('user', 'name')
-      .sort({ createdAt: -1 })
+      .sort({ _id: -1 })  // Use _id index — avoids Atlas M0 sort memory limit
       .limit(10);
 
     const recentActivity = recentTransactions.map(transaction => ({

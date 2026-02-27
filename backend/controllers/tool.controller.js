@@ -1,14 +1,43 @@
 import Tool from '../models/tool.model.js';
 import Category from '../models/category.model.js';
 
-// @desc    Get all tools (with search)
-// @route   GET /api/tools
+// ─── In-memory cache ───────────────────────────────────────────────
+// Caches tool query results for 60s to avoid repeated Atlas round-trips.
+const toolCache = new Map();
+const CACHE_TTL_MS = 60 * 1000;
+
+const getCacheKey = (search, page, limit) => `${search}|${page}|${limit}`;
+
+const getFromCache = (key) => {
+  const entry = toolCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL_MS) { toolCache.delete(key); return null; }
+  return entry.data;
+};
+
+const setCache = (key, data) => toolCache.set(key, { data, timestamp: Date.now() });
+
+export const invalidateToolCache = () => { toolCache.clear(); console.log('Tool cache cleared'); };
+// ───────────────────────────────────────────────────────────────────
+
+// @desc    Get tools with pagination, search, and in-memory cache
+// @route   GET /api/tools?page=1&limit=8&search=keyword
 // @access  Private
 export const getTools = async (req, res) => {
-  console.log('getTools called with query:', req.query);
   try {
-    const keyword = req.query.search ? req.query.search.toLowerCase() : '';
-    
+    const keyword = req.query.search ? req.query.search.trim() : '';
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 8));
+    const skip = (page - 1) * limit;
+
+    const cacheKey = getCacheKey(keyword, page, limit);
+    const cached = getFromCache(cacheKey);
+    if (cached) {
+      console.log('Cache HIT:', cacheKey);
+      return res.json(cached);
+    }
+    console.log('Cache MISS:', cacheKey);
+
     let query = {};
     if (keyword) {
       query = {
@@ -18,14 +47,21 @@ export const getTools = async (req, res) => {
         ]
       };
     }
-    
-    const tools = await Tool.find(query).populate('category', 'name');
-    res.json(tools);
+
+    const [totalCount, tools] = await Promise.all([
+      Tool.countDocuments(query),
+      Tool.find(query).populate('category', 'name').sort({ _id: -1 }).skip(skip).limit(limit)
+    ]);
+
+    const result = { tools, totalCount, totalPages: Math.ceil(totalCount / limit), currentPage: page, limit };
+    setCache(cacheKey, result);
+    res.json(result);
   } catch (error) {
     console.error('Error in getTools:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 };
+
 
 // @desc    Create a tool
 // @route   POST /api/tools
@@ -60,7 +96,8 @@ export const createTool = async (req, res) => {
 
     // Populate category name for response
     const populatedTool = await Tool.findById(tool._id).populate('category', 'name');
-    
+
+    invalidateToolCache(); // Clear cache so next fetch reflects the new tool
     res.status(201).json(populatedTool);
   } catch (error) {
     console.error('Error in createTool:', error);
@@ -129,7 +166,8 @@ export const updateTool = async (req, res) => {
 
     // Populate category name for response
     const populatedTool = await Tool.findById(updatedTool._id).populate('category', 'name');
-    
+
+    invalidateToolCache(); // Clear cache so next fetch reflects the update
     res.json(populatedTool);
   } catch (error) {
     console.error('Error in updateTool:', error);
@@ -151,6 +189,7 @@ export const deleteTool = async (req, res) => {
 
     // Remove tool using deleteOne() instead of remove()
     await Tool.deleteOne({ _id: req.params.id });
+    invalidateToolCache(); // Clear cache so next fetch reflects the deletion
     res.json({ message: 'Tool removed' });
   } catch (error) {
     console.error('Error in deleteTool:', error);

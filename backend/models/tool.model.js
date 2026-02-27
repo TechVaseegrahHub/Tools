@@ -35,5 +35,9 @@ const toolSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+// Indexes for fast search and filtering
+toolSchema.index({ toolName: 1, toolId: 1 });
+toolSchema.index({ status: 1 });
+
 const Tool = mongoose.model('Tool', toolSchema);
 export default Tool;

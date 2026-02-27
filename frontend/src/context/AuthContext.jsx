@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
@@ -12,6 +12,24 @@ const API_URL = 'http://localhost:5001/api/auth/';
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const logoutRef = useRef(null);
+
+  // Global axios interceptor: auto-logout on any 401 response
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          localStorage.removeItem('token');
+          delete axios.defaults.headers.common['Authorization'];
+          if (logoutRef.current) logoutRef.current();
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => axios.interceptors.response.eject(interceptor);
+  }, []);
 
   // Get user from localStorage on initial load
   useEffect(() => {
@@ -39,12 +57,12 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const res = await axios.post(API_URL + 'login', { email, password });
-      
+
       // Store user and token
       setUser(res.data);
       localStorage.setItem('token', res.data.token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
-      
+
       toast.success('Login successful!');
       return res.data; // Success
     } catch (err) {
@@ -62,6 +80,9 @@ export const AuthProvider = ({ children }) => {
     delete axios.defaults.headers.common['Authorization'];
     toast.info('You have been logged out');
   };
+
+  // Keep logoutRef in sync so the interceptor always calls the latest logout
+  logoutRef.current = logout;
 
   return (
     <AuthContext.Provider value={{ user, login, logout, loading, isAuthenticated: !!user }}>
