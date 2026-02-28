@@ -1,40 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiMail, FiLock, FiTool, FiSettings, FiZap, FiShield, FiGlobe } from 'react-icons/fi';
-import { toast } from 'react-toastify';
-
-// Floating Element Component
-const FloatingElement = ({ icon: Icon, delay, position, size = 'md' }) => {
-  const sizeClasses = {
-    sm: 'w-8 h-8',
-    md: 'w-12 h-12',
-    lg: 'w-16 h-16'
-  };
-
-  const positions = {
-    'top-left': 'top-20 left-10',
-    'top-right': 'top-16 right-16',
-    'bottom-left': 'bottom-24 left-12',
-    'bottom-right': 'bottom-20 right-20',
-    'center-left': 'top-1/2 left-8',
-    'center-right': 'top-1/3 right-12'
-  };
-
-  return (
-    <div
-      className={`absolute ${positions[position]} ${sizeClasses[size]} animate-float`}
-      style={{
-        animationDelay: `${delay}s`,
-        animationDuration: `${3 + delay}s`
-      }}
-    >
-      <div className="bg-white/10 backdrop-blur-sm rounded-full p-3 border border-white/20 shadow-lg">
-        <Icon className="text-white/80 w-full h-full" />
-      </div>
-    </div>
-  );
-};
+import { FiMail, FiLock, FiTool, FiSettings, FiZap, FiBox, FiArrowRight } from 'react-icons/fi';
+import { GiGears, GiSpanner, GiScrew } from 'react-icons/gi';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -45,11 +13,8 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
-
-  // Get the path to redirect to after login, or default to '/'
   const from = location.state?.from?.pathname || '/';
 
-  // Trigger animation on mount
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -57,10 +22,8 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const result = await login(email, password);
-      // SuperAdmin always goes to /superadmin; others go to intended page
       if (result?.role === 'SuperAdmin') {
         navigate('/superadmin', { replace: true });
       } else {
@@ -72,150 +35,147 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0">
-        {/* Floating Elements */}
-        <FloatingElement icon={FiSettings} delay={0} position="top-left" size="sm" />
-        <FloatingElement icon={FiZap} delay={0.5} position="top-right" size="md" />
-        <FloatingElement icon={FiShield} delay={1} position="bottom-left" size="sm" />
-        <FloatingElement icon={FiTool} delay={1.5} position="bottom-right" size="lg" />
-        <FloatingElement icon={FiSettings} delay={2} position="center-left" size="sm" />
-        <FloatingElement icon={FiZap} delay={2.5} position="center-right" size="md" />
+    <div className="min-h-screen flex bg-[#0f172a] overflow-hidden selection:bg-blue-500/30">
+      {/* Left Side: Animated Graphics (Visible on Large Screens) */}
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col items-center justify-center p-12 bg-gradient-to-br from-blue-900 via-[#0f172a] to-slate-900 border-r border-white/5">
 
-        {/* Animated gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+        {/* Background Decorative Gears */}
+        <div className="absolute top-10 left-10 text-white/5 animate-gear">
+          <GiGears size={200} />
+        </div>
+        <div className="absolute bottom-10 right-10 text-white/5 animate-gear" style={{ animationDirection: 'reverse' }}>
+          <GiGears size={150} />
+        </div>
 
-        {/* Subtle moving particles */}
-        <div className="absolute inset-0">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute rounded-full bg-white/10 animate-pulse"
-              style={{
-                width: `${Math.random() * 4 + 2}px`,
-                height: `${Math.random() * 4 + 2}px`,
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 5}s`,
-                animationDuration: `${10 + Math.random() * 10}s`
-              }}
-            />
-          ))}
+        {/* Main Mechanical Composition */}
+        <div className="relative z-10 w-full max-w-lg">
+          <div className="relative h-96 flex items-center justify-center">
+
+            {/* Central Gear */}
+            <div className="absolute text-blue-500/20 animate-gear">
+              <GiGears size={320} />
+            </div>
+
+            {/* Floating Tools */}
+            <div className="absolute top-0 left-1/4 animate-spanner text-blue-400/80 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+              <GiSpanner size={80} />
+            </div>
+
+            <div className="absolute bottom-1/4 right-1/4 animate-screw text-slate-400/60">
+              <GiScrew size={60} />
+            </div>
+
+            <div className="absolute top-1/2 left-10 -translate-y-1/2 animate-bounce duration-1000 text-blue-500/40">
+              <FiTool size={40} />
+            </div>
+
+            {/* Title Overlay */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+              <div className="p-6 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl">
+                <h2 className="text-5xl font-black text-white tracking-tighter mb-2">AAYUDHA</h2>
+                <div className="h-1.5 w-32 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full mx-auto" />
+                <p className="mt-4 text-slate-400 font-medium uppercase tracking-[0.3em] text-xs">Precision Inventory Control</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Dynamic Tagline */}
+        <div className="mt-12 text-center max-w-sm">
+          <h3 className="text-white text-xl font-semibold mb-3">Enterprise Grade Management</h3>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Experience the next generation of tool tracking and industrial inventory management with machine-like precision.
+          </p>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
-        <div className={`w-full max-w-md transition-all duration-700 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+      {/* Right Side: Login Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative">
+        {/* Mobile Background Mobile Decor */}
+        <div className="lg:hidden absolute inset-0 -z-10 opacity-10">
+          <GiGears className="absolute -top-20 -left-20 animate-gear" size={300} />
+          <GiSpanner className="absolute -bottom-20 -right-20 animate-spanner" size={300} />
+        </div>
 
-          {/* Logo Section */}
-          <div className="text-center mb-8 animate-fade-in-down">
-            <div className="mx-auto bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-2xl w-20 h-20 flex items-center justify-center mb-6 shadow-2xl transform hover:scale-105 transition-transform duration-300">
-              <FiTool className="h-10 w-10" />
+        <div className={`w-full max-w-md transition-all duration-1000 ease-out ${isMounted ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'}`}>
+          <div className="mb-10 lg:hidden text-center">
+            <div className="inline-flex p-4 bg-blue-600/20 rounded-2xl mb-4 border border-blue-500/30">
+              <GiSpanner className="text-blue-500 h-10 w-10 animate-spanner" />
             </div>
-            <div className="space-y-2">
-              <h1 className="text-4xl font-bold text-white drop-shadow-lg">ToolRoom</h1>
-              <p className="text-blue-200 text-lg">Professional Tool Management</p>
-              <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-purple-500 mx-auto rounded-full mt-4"></div>
-            </div>
+            <h1 className="text-3xl font-bold text-white tracking-tight">AAYUDHA</h1>
           </div>
 
-          {/* Login Card */}
-          <div className={`card p-8 bg-white/95 backdrop-blur-xl border border-white/20 shadow-2xl transform transition-all duration-500 hover:shadow-3xl ${isMounted ? 'scale-100' : 'scale-95'}`}>
-            <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-3xl p-8 sm:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
+              <p className="text-slate-400 text-sm">Sign in to your professional workstation</p>
+            </div>
 
-              {/* Email Field */}
-              <div className="space-y-2 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-semibold text-gray-700"
-                >
-                  Email address
-                </label>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Authorized Email</label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors group-focus-within:text-blue-500">
-                    <FiMail className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500" />
-                  </div>
+                  <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
                   <input
-                    id="email"
-                    name="email"
                     type="email"
-                    autoComplete="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white"
-                    placeholder="you@example.com"
+                    className="w-full bg-[#1e293b]/50 border border-slate-700/50 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                    placeholder="operator@aayudha.com"
                   />
                 </div>
               </div>
 
-              {/* Password Field */}
-              <div className="space-y-2 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                <div className="flex items-center justify-between">
-                  <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
-                    Password
-                  </label>
-                  <Link to="/forgot-password" className="text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors">
-                    Forgot password?
-                  </Link>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center px-1">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Secure Password</label>
+                  <Link to="/forgot-password" size="sm" className="text-blue-400 hover:text-blue-300 text-xs font-medium transition-colors">Recover Keys</Link>
                 </div>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors group-focus-within:text-blue-500">
-                    <FiLock className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500" />
-                  </div>
+                  <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
                   <input
-                    id="password"
-                    name="password"
                     type="password"
-                    autoComplete="current-password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-gray-50 hover:bg-white"
+                    className="w-full bg-[#1e293b]/50 border border-slate-700/50 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                     placeholder="••••••••"
                   />
                 </div>
               </div>
 
-              {/* Submit Button */}
-              <div className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 px-4 rounded-xl hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
-                >
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full relative group overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-4 px-6 rounded-2xl shadow-xl shadow-blue-500/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none"
+              >
+                <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                <span className="flex items-center justify-center">
                   {loading ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Authenticating...
-                    </>
+                    <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
-                    <>
-                      <FiLock className="mr-2 h-5 w-5" />
-                      Sign In
-                    </>
+                    <>Initialize Access <FiArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" /></>
                   )}
-                </button>
-              </div>
+                </span>
+              </button>
             </form>
+
+            <div className="mt-10 pt-8 border-t border-white/5 text-center">
+              <p className="text-slate-400 text-sm mb-4">New to the workstation?</p>
+              <Link
+                to="/register-org"
+                className="inline-flex items-center space-x-2 text-white font-bold hover:text-blue-400 transition-colors group"
+              >
+                <span>Register Organisation</span>
+                <FiBox className="group-hover:rotate-12 transition-transform" />
+              </Link>
+            </div>
           </div>
 
-          {/* Footer */}
-          <div className="mt-6 text-center animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-            <Link
-              to="/register-org"
-              className="inline-flex items-center gap-2 text-blue-200 text-sm hover:text-white transition-colors group"
-            >
-              <FiGlobe className="h-4 w-4 group-hover:rotate-12 transition-transform" />
-              Register your Organisation
-            </Link>
-            <p className="text-blue-300/60 text-xs mt-3">
-              © {new Date().getFullYear()} ToolRoom. All rights reserved.
+          <div className="mt-8 text-center">
+            <p className="text-slate-600 text-[10px] uppercase tracking-[0.5em]">
+              System Protocol 2.4.0 — Secure Auth Layer
             </p>
           </div>
         </div>

@@ -235,3 +235,32 @@
     animation: fade-in-up 0.6s ease-out forwards;
   }
 }
+@layer utilities {
+  @keyframes gear-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes spanner-pivot {
+    0%, 100% { transform: rotate(-10deg); }
+    50% { transform: rotate(20deg); }
+  }
+
+  @keyframes screw-drive {
+    0% { transform: rotate(0deg) translateY(-20px); opacity: 0; }
+    50% { transform: rotate(180deg) translateY(0); opacity: 1; }
+    100% { transform: rotate(360deg) translateY(20px); opacity: 0; }
+  }
+
+  .animate-gear {
+    animation: gear-rotate 20s linear infinite;
+  }
+
+  .animate-spanner {
+    animation: spanner-pivot 4s ease-in-out infinite;
+  }
+
+  .animate-screw {
+    animation: screw-drive 6s linear infinite;
+  }
+}
