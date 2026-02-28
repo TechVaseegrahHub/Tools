@@ -5,8 +5,10 @@ import { toast } from 'react-toastify';
 // Create the context
 const AuthContext = createContext();
 
-// Define the API base URL
-const API_URL = 'http://localhost:5001/api/auth/';
+// In development: Vite proxy handles /api/* → localhost:5001
+// In production: set VITE_API_URL=https://your-backend.com in your deployment env vars
+const BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = `${BASE_URL}/api/auth/`;
 
 // Create the provider component
 export const AuthProvider = ({ children }) => {
