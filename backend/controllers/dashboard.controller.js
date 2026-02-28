@@ -2,16 +2,21 @@ import Tool from '../models/tool.model.js';
 import User from '../models/user.model.js';
 import Transaction from '../models/transaction.model.js';
 
-// @desc    Get dashboard statistics
+// @desc    Get dashboard statistics (scoped to org)
 // @route   GET /api/dashboard/stats
 export const getDashboardStats = async (req, res) => {
   try {
-    const totalTools = await Tool.countDocuments();
-    const toolsAvailable = await Tool.countDocuments({ status: 'Available' });
-    const toolsCheckedOut = await Tool.countDocuments({ status: 'Checked Out' });
-    const toolsOverdue = await Tool.countDocuments({ status: 'Overdue' }); // You might need to adjust this based on your logic
-    const totalUsers = await User.countDocuments();
-    const recentTransactions = await Transaction.countDocuments();
+    const orgId = req.user.orgId;
+
+    const [totalTools, toolsAvailable, toolsCheckedOut, toolsOverdue, totalUsers, recentTransactions] =
+      await Promise.all([
+        Tool.countDocuments({ orgId }),
+        Tool.countDocuments({ orgId, status: 'Available' }),
+        Tool.countDocuments({ orgId, status: 'Checked Out' }),
+        Tool.countDocuments({ orgId, status: 'Overdue' }),
+        User.countDocuments({ orgId }),
+        Transaction.countDocuments({ orgId }),
+      ]);
 
     res.json({
       totalTools,
@@ -19,7 +24,7 @@ export const getDashboardStats = async (req, res) => {
       toolsCheckedOut,
       toolsOverdue,
       totalUsers,
-      recentTransactions
+      recentTransactions,
     });
   } catch (error) {
     console.error('Error in getDashboardStats:', error);
@@ -27,13 +32,13 @@ export const getDashboardStats = async (req, res) => {
   }
 };
 
-// @desc    Get overdue tools
+// @desc    Get overdue tools (scoped to org)
 // @route   GET /api/dashboard/overdue
 export const getOverdueTools = async (req, res) => {
   try {
-    // This is a simplified version - you might need to adjust based on your actual logic for determining overdue tools
-    const overdueTools = await Tool.find({ status: 'Overdue' }).sort({ _id: -1 }).limit(10);
-
+    const overdueTools = await Tool.find({ orgId: req.user.orgId, status: 'Overdue' })
+      .sort({ _id: -1 })
+      .limit(10);
     res.json(overdueTools);
   } catch (error) {
     console.error('Error in getOverdueTools:', error);
@@ -41,21 +46,20 @@ export const getOverdueTools = async (req, res) => {
   }
 };
 
-// @desc    Get recent activity
+// @desc    Get recent activity (scoped to org)
 // @route   GET /api/dashboard/recent
 export const getRecentActivity = async (req, res) => {
   try {
-    // This is a simplified version - you might want to implement a more sophisticated activity tracking system
-    const recentTransactions = await Transaction.find()
+    const recentTransactions = await Transaction.find({ orgId: req.user.orgId })
       .populate('tool', 'toolName')
       .populate('user', 'name')
-      .sort({ _id: -1 })  // Use _id index — avoids Atlas M0 sort memory limit
+      .sort({ _id: -1 })
       .limit(10);
 
     const recentActivity = recentTransactions.map(transaction => ({
       action: transaction.type === 'checkout' ? 'Tool Checked Out' : 'Tool Returned',
       description: `${transaction.user?.name || 'Unknown User'} ${transaction.type === 'checkout' ? 'checked out' : 'returned'} ${transaction.tool?.toolName || 'Unknown Tool'}`,
-      time: transaction.createdAt
+      time: transaction.createdAt,
     }));
 
     res.json(recentActivity);

@@ -29,12 +29,18 @@ const transactionSchema = new mongoose.Schema({
   notes: {
     type: String,
     trim: true
-  }
+  },
+  orgId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: true,
+  },
 }, { timestamps: true });
 
-// Index for fast "recent transactions" query on the dashboard
-transactionSchema.index({ _id: -1 });
+// Indexes for fast queries
 transactionSchema.index({ tool: 1, type: 1 });
+transactionSchema.index({ orgId: 1, createdAt: -1 }); // For recent-by-org queries
+transactionSchema.index({ orgId: 1 });
 
 const Transaction = mongoose.model('Transaction', transactionSchema);
 export default Transaction;

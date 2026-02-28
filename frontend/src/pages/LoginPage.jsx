@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiMail, FiLock, FiTool, FiSettings, FiZap, FiShield } from 'react-icons/fi';
+import { FiMail, FiLock, FiTool, FiSettings, FiZap, FiShield, FiGlobe } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 
 // Floating Element Component
@@ -11,7 +11,7 @@ const FloatingElement = ({ icon: Icon, delay, position, size = 'md' }) => {
     md: 'w-12 h-12',
     lg: 'w-16 h-16'
   };
-  
+
   const positions = {
     'top-left': 'top-20 left-10',
     'top-right': 'top-16 right-16',
@@ -22,9 +22,9 @@ const FloatingElement = ({ icon: Icon, delay, position, size = 'md' }) => {
   };
 
   return (
-    <div 
+    <div
       className={`absolute ${positions[position]} ${sizeClasses[size]} animate-float`}
-      style={{ 
+      style={{
         animationDelay: `${delay}s`,
         animationDuration: `${3 + delay}s`
       }}
@@ -41,7 +41,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  
+
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
@@ -59,9 +59,13 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
-      // On success, navigate to the page the user was trying to access
-      navigate(from, { replace: true });
+      const result = await login(email, password);
+      // SuperAdmin always goes to /superadmin; others go to intended page
+      if (result?.role === 'SuperAdmin') {
+        navigate('/superadmin', { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
     } finally {
       setLoading(false);
     }
@@ -78,10 +82,10 @@ const LoginPage = () => {
         <FloatingElement icon={FiTool} delay={1.5} position="bottom-right" size="lg" />
         <FloatingElement icon={FiSettings} delay={2} position="center-left" size="sm" />
         <FloatingElement icon={FiZap} delay={2.5} position="center-right" size="md" />
-        
+
         {/* Animated gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-        
+
         {/* Subtle moving particles */}
         <div className="absolute inset-0">
           {[...Array(20)].map((_, i) => (
@@ -104,7 +108,7 @@ const LoginPage = () => {
       {/* Main Content */}
       <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
         <div className={`w-full max-w-md transition-all duration-700 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          
+
           {/* Logo Section */}
           <div className="text-center mb-8 animate-fade-in-down">
             <div className="mx-auto bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-2xl w-20 h-20 flex items-center justify-center mb-6 shadow-2xl transform hover:scale-105 transition-transform duration-300">
@@ -116,15 +120,15 @@ const LoginPage = () => {
               <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-purple-500 mx-auto rounded-full mt-4"></div>
             </div>
           </div>
-          
+
           {/* Login Card */}
           <div className={`card p-8 bg-white/95 backdrop-blur-xl border border-white/20 shadow-2xl transform transition-all duration-500 hover:shadow-3xl ${isMounted ? 'scale-100' : 'scale-95'}`}>
             <form className="space-y-6" onSubmit={handleSubmit}>
-              
+
               {/* Email Field */}
               <div className="space-y-2 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                <label 
-                  htmlFor="email" 
+                <label
+                  htmlFor="email"
                   className="block text-sm font-semibold text-gray-700"
                 >
                   Email address
@@ -149,12 +153,14 @@ const LoginPage = () => {
 
               {/* Password Field */}
               <div className="space-y-2 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                <label 
-                  htmlFor="password" 
-                  className="block text-sm font-semibold text-gray-700"
-                >
-                  Password
-                </label>
+                <div className="flex items-center justify-between">
+                  <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
+                    Password
+                  </label>
+                  <Link to="/forgot-password" className="text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors">
+                    Forgot password?
+                  </Link>
+                </div>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors group-focus-within:text-blue-500">
                     <FiLock className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500" />
@@ -198,17 +204,19 @@ const LoginPage = () => {
               </div>
             </form>
           </div>
-          
+
           {/* Footer */}
-          <div className="mt-8 text-center animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-            <p className="text-blue-200 text-sm">
+          <div className="mt-6 text-center animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <Link
+              to="/register-org"
+              className="inline-flex items-center gap-2 text-blue-200 text-sm hover:text-white transition-colors group"
+            >
+              <FiGlobe className="h-4 w-4 group-hover:rotate-12 transition-transform" />
+              Register your Organisation
+            </Link>
+            <p className="text-blue-300/60 text-xs mt-3">
               © {new Date().getFullYear()} ToolRoom. All rights reserved.
             </p>
-            <div className="flex justify-center space-x-4 mt-3">
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-              <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-              <div className="w-2 h-2 bg-pink-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-            </div>
           </div>
         </div>
       </div>

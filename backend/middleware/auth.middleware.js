@@ -4,7 +4,6 @@ import User from '../models/user.model.js';
 const protect = async (req, res, next) => {
   let token;
 
-  // Check for token in headers
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       // Get token from header
@@ -13,12 +12,30 @@ const protect = async (req, res, next) => {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Get user from token (exclude password)
-      req.user = await User.findById(decoded.id).select('-password');
+      // --- SuperAdmin: token-only, no DB lookup needed ---
+      if (decoded.isSuperAdmin) {
+        req.user = {
+          id: 'superadmin',
+          role: 'SuperAdmin',
+          isSuperAdmin: true,
+          orgId: null,
+        };
+        return next();
+      }
 
-      if (!req.user) {
+      // --- Normal tenant user ---
+      const user = await User.findById(decoded.id).select('-password');
+
+      if (!user) {
         return res.status(401).json({ message: 'Not authorized, user not found' });
       }
+
+      req.user = {
+        id: user._id,
+        orgId: user.orgId,
+        role: user.role,
+        isSuperAdmin: false,
+      };
 
       next();
     } catch (error) {
@@ -44,4 +61,17 @@ const authorize = (...roles) => {
   };
 };
 
-export { protect, authorize };
+// Block SuperAdmin from accessing org-scoped routes
+const requireOrg = (req, res, next) => {
+  if (req.user?.isSuperAdmin) {
+    return res.status(403).json({
+      message: 'SuperAdmin cannot access tenant-specific routes directly. Use /api/superadmin/* routes.',
+    });
+  }
+  if (!req.user?.orgId) {
+    return res.status(403).json({ message: 'No organization assigned to this user.' });
+  }
+  next();
+};
+
+export { protect, authorize, requireOrg };

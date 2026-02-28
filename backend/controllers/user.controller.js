@@ -1,11 +1,11 @@
 import User from '../models/user.model.js';
 
-// @desc    Get all users
+// @desc    Get all users (scoped to org)
 // @route   GET /api/users
 // @access  Private/Admin
 export const getUsers = async (req, res) => {
   try {
-    const users = await User.find();
+    const users = await User.find({ orgId: req.user.orgId }).select('-password');
     res.json(users);
   } catch (error) {
     console.error('Error in getUsers:', error);
@@ -13,34 +13,34 @@ export const getUsers = async (req, res) => {
   }
 };
 
-// @desc    Create a user
+// @desc    Create a user (scoped to admin's org)
 // @route   POST /api/users
 // @access  Private/Admin
 export const createUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
-    
-    // Check if user already exists
+    const orgId = req.user.orgId;
+
     const userExists = await User.findOne({ email });
-    
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
-    
-    // Create user
+
     const user = await User.create({
       name,
       email,
       password,
       role: role || 'Employee',
+      orgId,
     });
-    
+
     if (user) {
       res.status(201).json({
         _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
+        orgId: user.orgId,
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
@@ -51,12 +51,12 @@ export const createUser = async (req, res) => {
   }
 };
 
-// @desc    Get user by ID
+// @desc    Get user by ID (scoped to org)
 // @route   GET /api/users/:id
 // @access  Private/Admin
 export const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findOne({ _id: req.params.id, orgId: req.user.orgId }).select('-password');
     if (user) {
       res.json(user);
     } else {
@@ -68,31 +68,31 @@ export const getUserById = async (req, res) => {
   }
 };
 
-// @desc    Update user
+// @desc    Update user (scoped to org)
 // @route   PUT /api/users/:id
 // @access  Private/Admin
 export const updateUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
-    
+    const user = await User.findOne({ _id: req.params.id, orgId: req.user.orgId });
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
+
     const { name, email, role } = req.body;
-    
-    // Update user
+
     user.name = name || user.name;
     user.email = email || user.email;
     user.role = role || user.role;
-    
+
     const updatedUser = await user.save();
-    
+
     res.json({
       _id: updatedUser._id,
       name: updatedUser.name,
       email: updatedUser.email,
       role: updatedUser.role,
+      orgId: updatedUser.orgId,
     });
   } catch (error) {
     console.error('Error in updateUser:', error);
@@ -100,34 +100,22 @@ export const updateUser = async (req, res) => {
   }
 };
 
-// @desc    Delete user
+// @desc    Delete user (scoped to org)
 // @route   DELETE /api/users/:id
 // @access  Private/Admin
 export const deleteUser = async (req, res) => {
-  console.log('DELETE USER FUNCTION CALLED');
-  console.log('Request params:', req.params);
-  console.log('Request headers:', req.headers);
   console.log('deleteUser called with id:', req.params.id);
   try {
-    console.log('Finding user by ID');
-    const user = await User.findById(req.params.id);
-    console.log('Found user:', user);
+    const user = await User.findOne({ _id: req.params.id, orgId: req.user.orgId });
 
     if (!user) {
-      console.log('User not found');
       return res.status(404).json({ message: 'User not found' });
     }
-    
-    // Remove user using deleteOne() instead of remove()
-    console.log('Deleting user with id:', req.params.id);
-    const deleteResult = await User.deleteOne({ _id: req.params.id });
-    console.log('Delete result:', deleteResult);
+
+    await User.deleteOne({ _id: req.params.id, orgId: req.user.orgId });
     res.json({ message: 'User removed' });
   } catch (error) {
     console.error('Error in deleteUser:', error);
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
     res.status(500).json({ message: 'Server Error', error: error.message });
   }
 };

@@ -9,7 +9,6 @@ const toolSchema = new mongoose.Schema({
   toolId: {
     type: String,
     required: true,
-    unique: true,
     trim: true,
   },
   category: {
@@ -32,11 +31,17 @@ const toolSchema = new mongoose.Schema({
   image: {
     type: String, // URL to the image
     trim: true,
-  }
+  },
+  orgId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: true,
+  },
 }, { timestamps: true });
 
-// Indexes for fast search and filtering
-toolSchema.index({ toolName: 1, toolId: 1 });
+// toolId is unique per org (not globally)
+toolSchema.index({ toolId: 1, orgId: 1 }, { unique: true });
+toolSchema.index({ toolName: 1 });
 toolSchema.index({ status: 1 });
 
 const Tool = mongoose.model('Tool', toolSchema);

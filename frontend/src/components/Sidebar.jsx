@@ -9,12 +9,15 @@ import {
   FiBarChart,
   FiLogOut,
   FiUser,
-  FiSettings
+  FiGlobe,
+  FiShield,
+  FiSettings,
 } from 'react-icons/fi';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const isSuperAdmin = user?.role === 'SuperAdmin';
 
   const handleLogout = () => {
     logout();
@@ -22,19 +25,22 @@ const Sidebar = ({ isOpen, onClose }) => {
   };
 
   const handleNavClick = () => {
-    // Close mobile menu when navigation item is clicked
-    if (onClose) {
-      onClose();
-    }
+    if (onClose) onClose();
   };
 
-  const navigation = [
-    { name: 'Dashboard', href: '/', icon: FiHome },
-    { name: 'Tool Inventory', href: '/tools', icon: FiTool },
-    { name: 'Transactions', href: '/transactions', icon: FiArrowRight },
-    { name: 'Manage Users', href: '/users', icon: FiUsers, role: 'Admin' },
-    { name: 'Reports', href: '/reports', icon: FiBarChart, roles: ['Admin', 'Manager'] },
-  ];
+  // SuperAdmin sees org management; normal users see the usual nav
+  const navigation = isSuperAdmin
+    ? [
+      { name: 'Org Management', href: '/superadmin', icon: FiGlobe },
+    ]
+    : [
+      { name: 'Dashboard', href: '/', icon: FiHome },
+      { name: 'Tool Inventory', href: '/tools', icon: FiTool },
+      { name: 'Transactions', href: '/transactions', icon: FiArrowRight },
+      { name: 'Manage Users', href: '/users', icon: FiUsers, role: 'Admin' },
+      { name: 'Reports', href: '/reports', icon: FiBarChart, roles: ['Admin', 'Manager'] },
+      { name: 'Settings', href: '/settings', icon: FiSettings, role: 'Admin' },
+    ];
 
   return (
     <>
@@ -53,33 +59,44 @@ const Sidebar = ({ isOpen, onClose }) => {
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
+        {/* Logo / Brand */}
         <div className="flex items-center space-x-3 px-6 py-5 border-b border-gray-200">
-          <div className="bg-primary-600 text-white p-2 rounded-lg">
-            <FiTool className="h-6 w-6" />
+          <div className={`text-white p-2 rounded-lg ${isSuperAdmin ? 'bg-purple-600' : 'bg-primary-600'}`}>
+            {isSuperAdmin ? <FiShield className="h-6 w-6" /> : <FiTool className="h-6 w-6" />}
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">ToolRoom</h1>
-            <p className="text-xs text-gray-500">Inventory Management</p>
+            <p className="text-xs text-gray-500">
+              {isSuperAdmin ? 'Super Admin' : 'Inventory Management'}
+            </p>
           </div>
         </div>
 
+        {/* Org Name Badge (only for tenant users) */}
+        {!isSuperAdmin && user?.org?.name && (
+          <div className="mx-4 mt-4 px-3 py-2 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-2">
+            <FiGlobe className="h-4 w-4 text-blue-500 flex-shrink-0" />
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-blue-700 truncate">{user.org.name}</p>
+              <p className="text-xs text-blue-400">Your Organization</p>
+            </div>
+          </div>
+        )}
+
         <nav className="flex-1 px-4 py-6 space-y-2">
           {navigation.map((item) => {
-            // Check if the item should be shown based on user role
             if (item.role && user?.role !== item.role) return null;
             if (item.roles && !item.roles.includes(user?.role)) return null;
 
             const Icon = item.icon;
-
             return (
               <NavLink
                 key={item.name}
                 to={item.href}
+                end={item.href === '/' || item.href === '/superadmin'}
                 onClick={handleNavClick}
                 className={({ isActive }) =>
-                  isActive
-                    ? 'sidebar-link-active'
-                    : 'sidebar-link'
+                  isActive ? 'sidebar-link-active' : 'sidebar-link'
                 }
               >
                 <Icon className="mr-3 h-5 w-5" />
@@ -92,14 +109,17 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* User Profile and Logout */}
         <div className="p-4 border-t border-gray-200">
           <div className="flex items-center space-x-3 mb-4">
-            <div className="bg-gray-200 rounded-full p-2">
-              <FiUser className="h-5 w-5 text-gray-600" />
+            <div className={`rounded-full p-2 ${isSuperAdmin ? 'bg-purple-100' : 'bg-gray-200'}`}>
+              {isSuperAdmin
+                ? <FiShield className="h-5 w-5 text-purple-600" />
+                : <FiUser className="h-5 w-5 text-gray-600" />
+              }
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-gray-900 truncate">
                 {user?.name || 'User'}
               </p>
-              <p className="text-xs text-gray-500 truncate">
+              <p className={`text-xs truncate ${isSuperAdmin ? 'text-purple-500 font-semibold' : 'text-gray-500'}`}>
                 {user?.role || 'Role'}
               </p>
             </div>

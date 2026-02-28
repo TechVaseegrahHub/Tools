@@ -1,34 +1,35 @@
 import Category from '../models/category.model.js';
 
-// @desc    Get all categories
+// @desc    Get all categories (scoped to org)
 // @route   GET /api/categories
 // @access  Private
 export const getCategories = async (req, res) => {
   try {
-    const categories = await Category.find({}).sort({ name: 1 });
+    const categories = await Category.find({ orgId: req.user.orgId }).sort({ name: 1 });
     res.json(categories);
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
   }
 };
 
-// @desc    Create a new category
+// @desc    Create a new category (scoped to org)
 // @route   POST /api/categories
 // @access  Private/Manager
 export const createCategory = async (req, res) => {
   const { name } = req.body;
+  const orgId = req.user.orgId;
 
   if (!name) {
     return res.status(400).json({ message: 'Category name is required' });
   }
 
   try {
-    const categoryExists = await Category.findOne({ name });
+    const categoryExists = await Category.findOne({ name, orgId });
     if (categoryExists) {
       return res.status(400).json({ message: 'Category already exists' });
     }
 
-    const category = new Category({ name });
+    const category = new Category({ name, orgId });
     const createdCategory = await category.save();
     res.status(201).json(createdCategory);
   } catch (error) {
