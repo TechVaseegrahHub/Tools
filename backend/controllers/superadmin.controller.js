@@ -3,7 +3,7 @@ import Tool from '../models/tool.model.js';
 import User from '../models/user.model.js';
 import Transaction from '../models/transaction.model.js';
 
-// @desc    List all organizations with summary counts
+// @desc    List all organizations with summary counts + subscription info
 // @route   GET /api/superadmin/orgs
 // @access  SuperAdmin only
 export const listOrgs = async (req, res) => {
@@ -23,6 +23,10 @@ export const listOrgs = async (req, res) => {
                     slug: org.slug,
                     isActive: org.isActive,
                     createdAt: org.createdAt,
+                    subscriptionPlan: org.subscriptionPlan,
+                    subscriptionStatus: org.subscriptionStatus,
+                    currentPeriodEnd: org.currentPeriodEnd,
+                    razorpaySubscriptionId: org.razorpaySubscriptionId,
                     stats: { users: userCount, tools: toolCount, transactions: transactionCount },
                 };
             })
@@ -31,6 +35,52 @@ export const listOrgs = async (req, res) => {
         res.json(orgsWithStats);
     } catch (error) {
         console.error('Error in listOrgs:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Get aggregated subscription stats across all orgs
+// @route   GET /api/superadmin/subscriptions
+// @access  SuperAdmin only
+export const getSubscriptionStats = async (req, res) => {
+    try {
+        const orgs = await Organization.find().sort({ createdAt: -1 });
+
+        const orgsWithStats = await Promise.all(
+            orgs.map(async (org) => {
+                const [userCount, toolCount, transactionCount] = await Promise.all([
+                    User.countDocuments({ orgId: org._id }),
+                    Tool.countDocuments({ orgId: org._id }),
+                    Transaction.countDocuments({ orgId: org._id }),
+                ]);
+                return {
+                    _id: org._id,
+                    name: org.name,
+                    slug: org.slug,
+                    isActive: org.isActive,
+                    createdAt: org.createdAt,
+                    subscriptionPlan: org.subscriptionPlan || 'free',
+                    subscriptionStatus: org.subscriptionStatus || 'active',
+                    currentPeriodEnd: org.currentPeriodEnd,
+                    razorpaySubscriptionId: org.razorpaySubscriptionId,
+                    stats: { users: userCount, tools: toolCount, transactions: transactionCount },
+                };
+            })
+        );
+
+        const premiumCount = orgsWithStats.filter(o => o.subscriptionPlan === 'premium').length;
+        const freeCount = orgsWithStats.filter(o => o.subscriptionPlan !== 'premium').length;
+
+        res.json({
+            summary: {
+                total: orgsWithStats.length,
+                premium: premiumCount,
+                free: freeCount,
+            },
+            orgs: orgsWithStats,
+        });
+    } catch (error) {
+        console.error('Error in getSubscriptionStats:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };

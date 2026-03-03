@@ -4,6 +4,7 @@ import { FiPlus, FiUser, FiUsers, FiEdit, FiTrash2, FiSearch, FiRefreshCw } from
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import UserFormModal from '../components/UserFormModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
@@ -12,6 +13,8 @@ const ManageUsers = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { user: currentUser } = useAuth();
 
@@ -106,19 +109,25 @@ const ManageUsers = () => {
     handleCloseModal();
   };
 
-  const handleDeleteUser = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      return;
-    }
+  const handleDeleteUser = (user) => {
+    setUserToDelete(user);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+    setIsDeleting(true);
 
     try {
-      await axios.delete(`/api/users/${id}`);
-      setUsers(users.filter(user => user._id !== id));
-      setFilteredUsers(filteredUsers.filter(user => user._id !== id));
+      await axios.delete(`/api/users/${userToDelete._id}`);
+      setUsers(users.filter(user => user._id !== userToDelete._id));
+      setFilteredUsers(filteredUsers.filter(user => user._id !== userToDelete._id));
       toast.success('User deleted successfully!');
+      setUserToDelete(null);
     } catch (error) {
       console.error('Failed to delete user', error);
       toast.error('Failed to delete user');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -249,7 +258,7 @@ const ManageUsers = () => {
                         </button>
                         {currentUser?._id !== user._id && (
                           <button
-                            onClick={() => handleDeleteUser(user._id)}
+                            onClick={() => handleDeleteUser(user)}
                             className="p-2 text-red-500 hover:text-red-700 rounded-lg hover:bg-red-50"
                             title="Delete User"
                           >
@@ -274,6 +283,18 @@ const ManageUsers = () => {
           onClose={handleCloseModal}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!userToDelete}
+        onClose={() => setUserToDelete(null)}
+        onConfirm={confirmDeleteUser}
+        title="Delete User"
+        message={`Are you sure you want to delete ${userToDelete?.name}? This action cannot be undone.`}
+        confirmText="Delete"
+        isDestructive={true}
+        isProcessing={isDeleting}
+      />
     </div>
   );
 };

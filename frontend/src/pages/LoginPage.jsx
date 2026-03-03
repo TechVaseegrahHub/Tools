@@ -27,7 +27,8 @@ const LoginPage = () => {
       if (result?.role === 'SuperAdmin') {
         navigate('/superadmin', { replace: true });
       } else {
-        navigate(from, { replace: true });
+        const destination = from === '/' ? '/dashboard' : from;
+        navigate(destination, { replace: true });
       }
     } finally {
       setLoading(false);
@@ -72,7 +73,7 @@ const LoginPage = () => {
             {/* Title Overlay */}
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
               <div className="p-6 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl">
-                <h2 className="text-5xl font-black text-white tracking-tighter mb-2">AAYUDHA</h2>
+                <h2 className="text-5xl font-black text-white tracking-tighter mb-2">ToolRoom</h2>
                 <div className="h-1.5 w-32 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full mx-auto" />
                 <p className="mt-4 text-slate-400 font-medium uppercase tracking-[0.3em] text-xs">Precision Inventory Control</p>
               </div>
@@ -102,7 +103,7 @@ const LoginPage = () => {
             <div className="inline-flex p-4 bg-blue-600/20 rounded-2xl mb-4 border border-blue-500/30">
               <GiSpanner className="text-blue-500 h-10 w-10 animate-spanner" />
             </div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">AAYUDHA</h1>
+            <h1 className="text-3xl font-bold text-white tracking-tight">ToolRoom</h1>
           </div>
 
           <div className="bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-3xl p-8 sm:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
@@ -122,7 +123,7 @@ const LoginPage = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-[#1e293b]/50 border border-slate-700/50 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
-                    placeholder="operator@aayudha.com"
+                    placeholder="operator@toolroom.com"
                   />
                 </div>
               </div>

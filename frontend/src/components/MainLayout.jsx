@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import Logo from './Logo';
 import { FiMenu, FiX } from 'react-icons/fi';
 
 const MainLayout = () => {
@@ -35,7 +36,9 @@ const MainLayout = () => {
                 <FiMenu className="h-6 w-6" />
               )}
             </button>
-            <h1 className="text-lg font-bold text-gray-900">ToolRoom</h1>
+            <div className="scale-75 origin-left">
+              <Logo />
+            </div>
           </div>
         </header>
 

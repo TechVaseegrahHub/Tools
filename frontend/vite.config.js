@@ -11,8 +11,8 @@ export default defineConfig({
       injectRegister: 'auto',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'Aayudha Tool Management',
-        short_name: 'Aayudha',
+        name: 'ToolRoom Management',
+        short_name: 'ToolRoom',
         description: 'Inventory and Sales Management System',
         theme_color: '#3b82f6',
         icons: [

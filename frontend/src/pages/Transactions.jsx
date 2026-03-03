@@ -4,6 +4,7 @@ import { FiArrowRight, FiArrowLeft, FiPlus, FiRefreshCw, FiSearch } from 'react-
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import TransactionModal from '../components/TransactionModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
@@ -11,6 +12,8 @@ const Transactions = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [transactionToCheckIn, setTransactionToCheckIn] = useState(null);
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
 
   const { user } = useAuth();
   const canManage = user?.role === 'Admin' || user?.role === 'Manager';
@@ -86,14 +89,16 @@ const Transactions = () => {
     fetchTransactions();
   };
 
-  const handleCheckIn = async (transactionId) => {
-    if (!window.confirm('Are you sure you want to check in this tool?')) {
-      return;
-    }
+  const handleCheckIn = (transaction) => {
+    setTransactionToCheckIn(transaction);
+  };
+
+  const confirmCheckIn = async () => {
+    if (!transactionToCheckIn) return;
 
     try {
-      setLoading(true);
-      const response = await axios.put(`/api/transactions/${transactionId}/checkin`, {});
+      setIsCheckingIn(true);
+      const response = await axios.put(`/api/transactions/${transactionToCheckIn._id}/checkin`, {});
 
       // Add the check-in transaction to the list
       const checkInTransaction = {
@@ -105,12 +110,13 @@ const Transactions = () => {
       setFilteredTransactions(prev => [checkInTransaction, ...prev]);
 
       toast.success('Tool checked in successfully!');
+      setTransactionToCheckIn(null);
     } catch (error) {
       console.error('Failed to check in tool', error);
       const errorMsg = error.response?.data?.message || 'Failed to check in tool';
       toast.error(errorMsg);
     } finally {
-      setLoading(false);
+      setIsCheckingIn(false);
     }
   };
 
@@ -287,7 +293,7 @@ const Transactions = () => {
                       <td className="py-3 px-4">
                         {transaction.action === 'Checked Out' && transaction.status !== 'Available' && (
                           <button
-                            onClick={() => handleCheckIn(transaction._id)}
+                            onClick={() => handleCheckIn(transaction)}
                             className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                           >
                             <FiArrowLeft className="mr-1 h-4 w-4" /> Check In
@@ -310,6 +316,18 @@ const Transactions = () => {
           onTransactionComplete={handleTransactionComplete}
         />
       )}
+
+      {/* Check In Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!transactionToCheckIn}
+        onClose={() => setTransactionToCheckIn(null)}
+        onConfirm={confirmCheckIn}
+        title="Check In Tool"
+        message={`Are you sure you want to check in the tool "${transactionToCheckIn?.toolName}"?`}
+        confirmText="Check In"
+        isDestructive={false}
+        isProcessing={isCheckingIn}
+      />
     </div>
   );
 };

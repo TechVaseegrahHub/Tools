@@ -13,6 +13,7 @@ import {
   FiShield,
   FiSettings,
 } from 'react-icons/fi';
+import Logo from './Logo';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { user, logout } = useAuth();
@@ -34,7 +35,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       { name: 'Org Management', href: '/superadmin', icon: FiGlobe },
     ]
     : [
-      { name: 'Dashboard', href: '/', icon: FiHome },
+      { name: 'Dashboard', href: '/dashboard', icon: FiHome },
       { name: 'Tool Inventory', href: '/tools', icon: FiTool },
       { name: 'Transactions', href: '/transactions', icon: FiArrowRight },
       { name: 'Manage Users', href: '/users', icon: FiUsers, role: 'Admin' },
@@ -60,16 +61,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         {/* Logo / Brand */}
-        <div className="flex items-center space-x-3 px-6 py-5 border-b border-gray-200">
-          <div className={`text-white p-2 rounded-lg ${isSuperAdmin ? 'bg-purple-600' : 'bg-primary-600'}`}>
-            {isSuperAdmin ? <FiShield className="h-6 w-6" /> : <FiTool className="h-6 w-6" />}
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">ToolRoom</h1>
-            <p className="text-xs text-gray-500">
-              {isSuperAdmin ? 'Super Admin' : 'Inventory Management'}
-            </p>
-          </div>
+        <div className="flex items-center px-6 py-5 border-b border-gray-200 h-[72px]">
+          <Logo isSuperAdmin={isSuperAdmin} />
         </div>
 
         {/* Org Name Badge (only for tenant users) */}

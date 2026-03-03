@@ -13,6 +13,7 @@ import categoryRoutes from './routes/category.routes.js';
 import transactionRoutes from './routes/transaction.routes.js';
 import superAdminRoutes from './routes/superadmin.routes.js';
 import orgRoutes from './routes/org.routes.js';
+import paymentRoutes from './routes/payment.routes.js';
 // Load environment variables
 dotenv.config();
 
@@ -53,6 +54,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/superadmin', superAdminRoutes);
 app.use('/api/org', orgRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {

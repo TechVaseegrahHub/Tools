@@ -71,7 +71,7 @@ const InstallPrompt = () => {
                             <FiDownload className="w-6 h-6 text-blue-600" />
                         </div>
                         <div>
-                            <h3 className="text-sm font-bold text-gray-900 leading-tight">Install Aayudha App</h3>
+                            <h3 className="text-sm font-bold text-gray-900 leading-tight">Install ToolRoom App</h3>
                             <p className="text-xs text-gray-500 mt-0.5">Faster & works like a real app</p>
                         </div>
                     </div>

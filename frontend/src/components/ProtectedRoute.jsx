@@ -25,7 +25,7 @@ const ProtectedRoute = ({ children, roles }) => {
   // 2. Check if route requires specific roles and if user has one
   if (roles && !roles.includes(user.role)) {
     // Redirect to home page (or a dedicated "Access Denied" page)
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // If authenticated and (if required) authorized, render the children

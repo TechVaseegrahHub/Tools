@@ -4,7 +4,7 @@ import { FiX, FiPlus, FiTool, FiTag, FiInfo, FiCalendar, FiMapPin, FiSave, FiIma
 import ImageEditor from './ImageEditor';
 import CameraCapture from './CameraCapture';
 
-const ToolFormModal = ({ tool, onSave, onClose, userRole }) => {
+const ToolFormModal = ({ tool, onSave, onClose, userRole, onLimitReached }) => {
   const [formData, setFormData] = useState({
     toolName: '',
     toolId: '',
@@ -112,7 +112,12 @@ const ToolFormModal = ({ tool, onSave, onClose, userRole }) => {
       const { data } = await apiCall;
       onSave(data); // Pass the new/updated tool back to the parent
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save tool');
+      if (err.response?.data?.code === 'TOOL_LIMIT_REACHED') {
+        onClose(); // Close the creation modal
+        if (onLimitReached) onLimitReached(); // Trigger the upgrade modal
+      } else {
+        setError(err.response?.data?.message || 'Failed to save tool');
+      }
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,6 @@
 import express from 'express';
 import { protect, authorize } from '../middleware/auth.middleware.js';
-import { listOrgs, getOrgDetails, toggleOrgStatus, resetUserPassword } from '../controllers/superadmin.controller.js';
+import { listOrgs, getOrgDetails, toggleOrgStatus, resetUserPassword, getSubscriptionStats } from '../controllers/superadmin.controller.js';
 
 const router = express.Router();
 
@@ -11,5 +11,6 @@ router.get('/orgs', listOrgs);
 router.get('/orgs/:orgId', getOrgDetails);
 router.put('/orgs/:orgId/toggle', toggleOrgStatus);
 router.put('/users/:userId/reset-password', resetUserPassword);
+router.get('/subscriptions', getSubscriptionStats);
 
 export default router;

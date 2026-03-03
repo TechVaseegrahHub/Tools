@@ -1,5 +1,6 @@
 import Tool from '../models/tool.model.js';
 import Category from '../models/category.model.js';
+import Organization from '../models/organization.model.js';
 
 // ─── In-memory cache ───────────────────────────────────────────────
 // Caches tool query results for 60s to avoid repeated Atlas round-trips.
@@ -82,6 +83,22 @@ export const createTool = async (req, res) => {
   const orgId = req.user.orgId;
 
   try {
+    // 1. Enforce Tool Limit for Free Plan
+    const org = await Organization.findById(orgId);
+    if (!org) {
+      return res.status(404).json({ message: 'Organization not found' });
+    }
+
+    if (org.subscriptionPlan === 'free' || org.subscriptionStatus !== 'active') {
+      const toolCount = await Tool.countDocuments({ orgId });
+      if (toolCount >= 10) {
+        return res.status(403).json({
+          code: 'TOOL_LIMIT_REACHED',
+          message: 'Free tier limit of 10 tools reached. Please upgrade to Premium.'
+        });
+      }
+    }
+
     // Check if tool ID already exists within this org
     const toolExists = await Tool.findOne({ toolId, orgId });
     if (toolExists) {

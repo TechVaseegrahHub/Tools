@@ -39,7 +39,7 @@ const RegisterOrg = () => {
             localStorage.setItem('token', data.token);
             axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
             setSuccess(true);
-            toast.success(`Welcome to Aayudha, ${data.org?.name}!`);
+            toast.success(`Welcome to ToolRoom, ${data.org?.name}!`);
             setTimeout(() => navigate('/'), 2000);
         } catch (err) {
             toast.error(err.response?.data?.message || 'Registration failed');
@@ -96,7 +96,7 @@ const RegisterOrg = () => {
 
                 <div className={`w-full max-w-md my-auto transition-all duration-1000 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
                     <div className="mb-8 lg:hidden text-center">
-                        <h1 className="text-3xl font-bold text-white tracking-tight italic">AAYUDHA</h1>
+                        <h1 className="text-3xl font-bold text-white tracking-tight italic">ToolRoom</h1>
                     </div>
 
                     <div className="bg-white/[0.02] backdrop-blur-2xl border border-white/5 rounded-3xl p-8 sm:p-10 shadow-2xl">
