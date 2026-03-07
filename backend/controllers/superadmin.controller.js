@@ -149,3 +149,83 @@ export const resetUserPassword = async (req, res) => {
         res.status(500).json({ message: 'Server Error' });
     }
 };
+
+// @desc    Get finance stats — real revenue from Razorpay payments + client onboarding
+// @route   GET /api/superadmin/finance?year=YYYY
+// @access  SuperAdmin only
+export const getFinanceStats = async (req, res) => {
+    try {
+        const year = parseInt(req.query.year) || new Date().getFullYear();
+        const yearStart = new Date(`${year}-01-01T00:00:00.000Z`);
+        const yearEnd = new Date(`${year + 1}-01-01T00:00:00.000Z`);
+
+        // ── Client onboarding: orgs created this year ──────────────────
+        const orgsThisYear = await Organization.find({
+            createdAt: { $gte: yearStart, $lt: yearEnd },
+        }).select('createdAt');
+
+        // ── All premium orgs (with subscription IDs) ────────────────────
+        const allPremiumOrgs = await Organization.find({
+            subscriptionPlan: 'premium',
+            razorpaySubscriptionId: { $ne: null },
+        }).select('razorpaySubscriptionId paymentHistory');
+
+        const allFreeOrgs = await Organization.countDocuments({ subscriptionPlan: 'free' });
+
+        // ── Monthly buckets ──────────────────────────────────────────────
+        const months = Array.from({ length: 12 }, (_, i) => ({
+            month: i + 1,
+            label: new Date(year, i, 1).toLocaleString('en-IN', { month: 'long' }),
+            newClients: 0,
+            paymentsCount: 0,
+            revenue: 0,   // in rupees
+        }));
+
+        // New clients per month
+        for (const org of orgsThisYear) {
+            const m = new Date(org.createdAt).getUTCMonth();
+            months[m].newClients += 1;
+        }
+
+        // ── Fetch REAL payments from Razorpay REST API ───────────────────
+        let allTimeRevenuePaise = 0;
+
+        await Promise.allSettled(
+            allPremiumOrgs.map(async (org) => {
+                for (const p of org.paymentHistory || []) {
+                    allTimeRevenuePaise += p.amountPaise;
+                    const paidAt = new Date(p.paidAt);
+                    if (paidAt.getUTCFullYear() === year) {
+                        months[paidAt.getUTCMonth()].paymentsCount += 1;
+                        months[paidAt.getUTCMonth()].revenue += p.amountPaise / 100;
+                    }
+                }
+            })
+        );
+
+        const totalRevenue = months.reduce((s, m) => s + m.revenue, 0);
+        const totalNewClients = months.reduce((s, m) => s + m.newClients, 0);
+        const allTimeRevenue = allTimeRevenuePaise / 100;
+
+        const availableYears = await Organization.aggregate([
+            { $group: { _id: { $year: '$createdAt' } } },
+            { $sort: { _id: 1 } },
+        ]);
+
+        res.json({
+            year,
+            summary: {
+                yearRevenue: Math.round(totalRevenue * 100) / 100,
+                yearNewClients: totalNewClients,
+                allTimePremium: allPremiumOrgs.length,
+                allTimeRevenue: Math.round(allTimeRevenue * 100) / 100,
+                freeOrgs: allFreeOrgs,
+            },
+            months,
+            availableYears: availableYears.map(y => y._id),
+        });
+    } catch (error) {
+        console.error('Error in getFinanceStats:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};

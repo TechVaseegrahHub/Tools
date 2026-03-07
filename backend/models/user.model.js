@@ -16,7 +16,17 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    // Optional: Google-auth users won't have a password
+    required: false,
+  },
+  authProvider: {
+    type: String,
+    enum: ['local', 'google'],
+    default: 'local',
+  },
+  googleId: {
+    type: String,
+    default: null,
   },
   role: {
     type: String,
@@ -34,10 +44,10 @@ const userSchema = new mongoose.Schema({
   resetTokenExpiry: { type: Date },
 }, { timestamps: true });
 
-// Pre-save hook to hash password before saving
+// Pre-save hook to hash password before saving (only for local auth)
 userSchema.pre('save', async function (next) {
-  // Only hash the password if it has been modified (or is new)
-  if (!this.isModified('password')) {
+  // Skip hashing if password not modified
+  if (!this.isModified('password') || !this.password) {
     return next();
   }
 
@@ -52,6 +62,7 @@ userSchema.pre('save', async function (next) {
 
 // Method to compare candidate password with hashed password
 userSchema.methods.comparePassword = async function (candidatePassword) {
+  if (!this.password) return false;
   return await bcrypt.compare(candidatePassword, this.password);
 };
 

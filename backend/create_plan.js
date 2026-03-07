@@ -16,7 +16,7 @@ async function main() {
             interval: 1,
             item: {
                 name: 'ToolRoom Premium - ₹99/month',
-                amount: 9900, // amount in paise (9900 paise = ₹99)
+                amount: 9900, // 9900 paise = ₹99
                 currency: 'INR',
                 description: 'Premium Plan - ₹99/month'
             },

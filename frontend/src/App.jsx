@@ -11,6 +11,8 @@ import Reports from './pages/Reports';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import OrgSettings from './pages/OrgSettings';
+import SubscriptionPage from './pages/SubscriptionPage';
+import FinancePage from './pages/FinancePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/MainLayout';
 import InstallPrompt from './components/InstallPrompt';
@@ -70,6 +72,16 @@ function App() {
           <Route path="/settings" element={
             <ProtectedRoute roles={['Admin']}>
               <OrgSettings />
+            </ProtectedRoute>
+          } />
+          <Route path="/subscription" element={
+            <ProtectedRoute roles={['Admin', 'SuperAdmin']}>
+              <SubscriptionPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/finance" element={
+            <ProtectedRoute roles={['SuperAdmin']}>
+              <FinancePage />
             </ProtectedRoute>
           } />
         </Route>

@@ -15,11 +15,11 @@ const UpgradeModal = ({ isOpen, onClose, onSuccess }) => {
             const { data } = await axios.post('/api/payment/create-subscription');
 
             const options = {
-                key: data.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID, // Enter the Key ID generated from the Dashboard
+                key: data.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID,
                 subscription_id: data.subscriptionId,
                 name: 'ToolRoom Premium',
                 description: 'Unlimited Tools Subscription',
-                image: '/vite.svg', // Assuming you have an icon here or you can use your logo url
+                image: '/vite.svg',
                 handler: async function (response) {
                     try {
                         // 2. Verify payment on backend
@@ -37,7 +37,7 @@ const UpgradeModal = ({ isOpen, onClose, onSuccess }) => {
                     }
                 },
                 prefill: {
-                    name: '', // You could pass user details if available via context
+                    name: '',
                     email: '',
                     contact: '',
                 },

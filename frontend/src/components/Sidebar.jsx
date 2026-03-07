@@ -12,6 +12,8 @@ import {
   FiGlobe,
   FiShield,
   FiSettings,
+  FiZap,
+  FiDollarSign,
 } from 'react-icons/fi';
 import Logo from './Logo';
 
@@ -33,6 +35,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const navigation = isSuperAdmin
     ? [
       { name: 'Org Management', href: '/superadmin', icon: FiGlobe },
+      { name: 'Finance', href: '/finance', icon: FiDollarSign },
     ]
     : [
       { name: 'Dashboard', href: '/dashboard', icon: FiHome },
@@ -41,6 +44,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       { name: 'Manage Users', href: '/users', icon: FiUsers, role: 'Admin' },
       { name: 'Reports', href: '/reports', icon: FiBarChart, roles: ['Admin', 'Manager'] },
       { name: 'Settings', href: '/settings', icon: FiSettings, role: 'Admin' },
+      { name: 'Subscription', href: '/subscription', icon: FiZap, role: 'Admin' },
     ];
 
   return (

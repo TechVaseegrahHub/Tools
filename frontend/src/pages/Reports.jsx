@@ -12,7 +12,7 @@ const Reports = () => {
     totalUsers: 0,
     activeUsers: 0
   });
-  
+
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,11 +20,11 @@ const Reports = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch dashboard stats
         const statsResponse = await axios.get('/api/dashboard/stats');
         setReportData(statsResponse.data);
-        
+
         // Fetch recent activity
         const activityResponse = await axios.get('/api/dashboard/recent');
         setRecentActivity(activityResponse.data);

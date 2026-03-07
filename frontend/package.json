@@ -12,6 +12,7 @@
   "dependencies": {
     "@fontsource/space-mono": "^5.2.9",
     "@fontsource/syncopate": "^5.2.8",
+    "@react-oauth/google": "^0.13.4",
     "@tailwindcss/line-clamp": "^0.4.4",
     "axios": "^1.12.2",
     "framer-motion": "^12.34.3",

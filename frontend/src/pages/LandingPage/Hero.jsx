@@ -58,12 +58,12 @@ const Hero = () => {
 
                         <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-6">
                             <Link to="/register-org" className="w-full sm:w-auto">
-                                <button className="btn-primary w-full flex items-center justify-center text-sm md:text-base px-4 py-3">
+                                <button className="w-full flex items-center justify-center text-sm md:text-base px-6 py-3 bg-[#ff0000] text-white font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all duration-150 font-mono-tech">
                                     INITIATE_FREE <FiArrowRight className="ml-2" />
                                 </button>
                             </Link>
                             <Link to="/login" className="w-full sm:w-auto">
-                                <button className="btn-secondary w-full text-sm md:text-base px-4 py-3">
+                                <button className="w-full text-sm md:text-base px-6 py-3 bg-white text-black font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] hover:bg-black hover:text-white transition-all duration-150 font-mono-tech">
                                     AUTH_LOGIN
                                 </button>
                             </Link>

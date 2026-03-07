@@ -95,6 +95,21 @@ export const verifySubscription = async (req, res) => {
             oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
             org.currentPeriodEnd = oneMonthFromNow;
 
+            // Fetch real payment amount from Razorpay and store in local history
+            try {
+                const payment = await razorpay.payments.fetch(razorpay_payment_id);
+                if (payment && payment.amount) {
+                    org.paymentHistory.push({
+                        razorpayPaymentId: razorpay_payment_id,
+                        amountPaise: payment.amount,
+                        paidAt: new Date(payment.created_at * 1000),
+                    });
+                }
+            } catch (fetchErr) {
+                console.warn('Could not fetch payment amount from Razorpay:', fetchErr.message);
+                // Still mark as premium even if amount fetch fails
+            }
+
             await org.save();
 
             res.status(200).json({ message: 'Payment verified successfully. Welcome to Premium!' });

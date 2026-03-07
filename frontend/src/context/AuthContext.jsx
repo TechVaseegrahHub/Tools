@@ -75,6 +75,48 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Google OAuth login/register
+  const loginWithGoogle = async (idToken) => {
+    try {
+      const res = await axios.post(API_URL + 'google', { idToken });
+
+      // New user — needs to create an org; return data to caller without setting user
+      if (res.data.newUser) {
+        return res.data;
+      }
+
+      // Existing user — store token and set user state
+      setUser(res.data);
+      localStorage.setItem('token', res.data.token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+
+      toast.success(`Welcome back, ${res.data.name}!`);
+      return res.data;
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Google sign-in failed';
+      toast.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
+  // Google register org (for new Google users who need to create an org)
+  const googleRegisterOrg = async (idToken, orgName, adminPassword) => {
+    try {
+      const res = await axios.post(API_URL + 'google-register-org', { idToken, orgName, adminPassword });
+
+      setUser(res.data);
+      localStorage.setItem('token', res.data.token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+
+      toast.success(`Welcome to ToolRoom, ${res.data.org?.name}!`);
+      return res.data;
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Registration failed';
+      toast.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+  };
+
   // Logout function
   const logout = () => {
     setUser(null);
@@ -87,7 +129,7 @@ export const AuthProvider = ({ children }) => {
   logoutRef.current = logout;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, loginWithGoogle, googleRegisterOrg, logout, loading, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

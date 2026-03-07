@@ -4,6 +4,9 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { sendOtpEmail } from '../utils/email.js';
+import { OAuth2Client } from 'google-auth-library';
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Helper function to generate a token
 const generateToken = (payload) => {
@@ -324,5 +327,121 @@ export const changePassword = async (req, res) => {
   } catch (error) {
     console.error('changePassword error:', error);
     res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// ─── Google OAuth ──────────────────────────────────────────────────────────────
+
+// Helper: verify Google ID token and return payload
+const verifyGoogleToken = async (idToken) => {
+  const ticket = await googleClient.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  return ticket.getPayload();
+};
+
+// @desc    Google Sign-In — login existing user OR signal new-user flow
+// @route   POST /api/auth/google
+export const googleAuth = async (req, res) => {
+  const { idToken } = req.body;
+  if (!idToken) return res.status(400).json({ message: 'Google ID token is required' });
+
+  try {
+    const payload = await verifyGoogleToken(idToken);
+    const { sub: googleId, email, name, picture } = payload;
+
+    // Look up existing user
+    const user = await User.findOne({ email: email.toLowerCase() }).populate('orgId', 'name slug isActive');
+
+    if (user) {
+      // Existing user — link googleId if not already linked, then log them in
+      if (!user.googleId) {
+        user.googleId = googleId;
+        if (user.authProvider === 'local') user.authProvider = 'google';
+        await user.save({ validateBeforeSave: false });
+      }
+
+      if (user.orgId && !user.orgId.isActive) {
+        return res.status(403).json({ message: 'Your organization account is inactive.' });
+      }
+
+      const token = generateToken({ id: user._id, orgId: user.orgId?._id, role: user.role });
+      return res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        orgId: user.orgId?._id,
+        org: user.orgId ? { name: user.orgId.name, slug: user.orgId.slug } : null,
+        token,
+      });
+    }
+
+    // New user — they need to create an org first
+    return res.status(200).json({
+      newUser: true,
+      googleId,
+      name,
+      email,
+      picture,
+    });
+  } catch (error) {
+    console.error('googleAuth error:', error);
+    res.status(401).json({ message: 'Google authentication failed. Please try again.' });
+  }
+};
+
+// @desc    Google Register Org — create org + admin for a new Google user
+// @route   POST /api/auth/google-register-org
+export const googleRegisterOrg = async (req, res) => {
+  const { idToken, orgName, adminPassword } = req.body;
+  if (!idToken || !orgName) {
+    return res.status(400).json({ message: 'Google token and organisation name are required' });
+  }
+
+  try {
+    const payload = await verifyGoogleToken(idToken);
+    const { sub: googleId, email, name } = payload;
+
+    // Guard: email already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({ message: 'An account with this Google email already exists. Please sign in instead.' });
+    }
+
+    // Create org slug
+    const slug = orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slugExists = await Organization.findOne({ slug });
+    if (slugExists) {
+      return res.status(400).json({ message: 'An organisation with a similar name already exists' });
+    }
+
+    const org = await Organization.create({ name: orgName, slug, isActive: true });
+
+    const admin = await User.create({
+      name,
+      email: email.toLowerCase(),
+      password: adminPassword || (Math.random().toString(36).slice(-10)),
+      authProvider: 'google',
+      googleId,
+      role: 'Admin',
+      orgId: org._id,
+    });
+
+    const token = generateToken({ id: admin._id, orgId: org._id, role: admin.role });
+
+    res.status(201).json({
+      _id: admin._id,
+      name: admin.name,
+      email: admin.email,
+      role: admin.role,
+      orgId: org._id,
+      org: { name: org.name, slug: org.slug },
+      token,
+    });
+  } catch (error) {
+    console.error('googleRegisterOrg error:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
   }
 };

@@ -33,7 +33,14 @@ const organizationSchema = new mongoose.Schema({
     currentPeriodEnd: {
         type: Date,
         default: null
-    }
+    },
+    paymentHistory: [
+        {
+            razorpayPaymentId: { type: String },
+            amountPaise: { type: Number }, // amount in paise (₹1 = 100)
+            paidAt: { type: Date, default: Date.now },
+        }
+    ],
 }, { timestamps: true });
 
 const Organization = mongoose.model('Organization', organizationSchema);
