@@ -8,31 +8,30 @@ const InstallPrompt = () => {
     const [isStandalone, setIsStandalone] = useState(false);
 
     useEffect(() => {
-        // 1. Detect if the app is already installed
+        // Detect if the app is already installed
         const standalone = window.matchMedia('(display-mode: standalone)').matches ||
             window.navigator.standalone === true;
         setIsStandalone(standalone);
 
-        // 2. Detect if it's an iOS device
+        // Detect if it's an iOS device
         const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         setIsIOS(ios);
 
-        // 3. Listen for the native install prompt (Android/Desktop)
+        // Listen for the native install prompt (Android/Desktop)
         const handleBeforeInstallPrompt = (e) => {
-            console.log('beforeinstallprompt event caught');
             e.preventDefault();
             setDeferredPrompt(e);
             if (!standalone) {
-                setIsVisible(true);
+                // Show slightly delayed for better user experience
+                setTimeout(() => setIsVisible(true), 1500);
             }
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-        // 4. For iOS, we show the prompt manually if it's not standalone
-        // We add a small delay to make it feel natural
+        // For iOS, show the prompt manually if not in standalone
         if (ios && !standalone) {
-            const timer = setTimeout(() => setIsVisible(true), 3000);
+            const timer = setTimeout(() => setIsVisible(true), 1500);
             return () => clearTimeout(timer);
         }
 
@@ -42,19 +41,11 @@ const InstallPrompt = () => {
     }, []);
 
     const handleInstallClick = async () => {
-        if (isIOS) {
-            // iOS doesn't support programmatic install, so we just show instructions
-            return;
-        }
-
-        if (!deferredPrompt) {
-            console.log('No deferred prompt available');
-            return;
-        }
+        if (isIOS) return;
+        if (!deferredPrompt) return;
 
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response: ${outcome}`);
 
         setDeferredPrompt(null);
         setIsVisible(false);
@@ -63,57 +54,68 @@ const InstallPrompt = () => {
     if (!isVisible || isStandalone) return null;
 
     return (
-        <div className="fixed bottom-6 left-4 right-4 z-[9999] md:left-auto md:right-6 md:w-96">
-            <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 animate-in fade-in slide-in-from-bottom-8 duration-500">
-                <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                        <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                            <FiDownload className="w-6 h-6 text-blue-600" />
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-bold text-gray-900 leading-tight">Install ToolRoom App</h3>
-                            <p className="text-xs text-gray-500 mt-0.5">Faster & works like a real app</p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => setIsVisible(false)}
-                        className="p-1 -mt-1 text-gray-300 hover:text-gray-500 rounded-lg transition-all"
-                    >
-                        <FiX className="w-5 h-5" />
-                    </button>
-                </div>
+        <div className="fixed bottom-0 left-0 right-0 z-[9999] p-4 sm:p-6 sm:bottom-6 sm:left-auto sm:right-6 sm:max-w-md w-full pointer-events-none flex justify-center">
+            <div className="pointer-events-auto w-full max-w-sm sm:max-w-md bg-white/95 backdrop-blur-xl border border-gray-100 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-4 relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500 ease-out fill-mode-forwards">
+                {/* Decorative background glow */}
+                <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
+                <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
 
-                {isIOS ? (
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                        <div className="flex items-center space-x-2 text-xs text-gray-600 mb-3">
-                            <span>To install: Tap the </span>
-                            <FiShare className="text-blue-600 w-4 h-4 inline" />
-                            <span> icon then </span>
-                            <span className="font-bold whitespace-nowrap">"Add to Home Screen"</span>
+                <div className="relative flex items-start gap-4">
+                    {/* App Icon Area */}
+                    <div className="flex-shrink-0 relative group">
+                        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-md overflow-hidden transition-transform group-hover:scale-105 duration-300 border border-gray-100">
+                            <img src="/pwa-192x192.png" alt="ToolRoom App Icon" className="w-full h-full object-cover" />
                         </div>
-                        <button
-                            onClick={() => setIsVisible(false)}
-                            className="w-full py-2.5 bg-blue-600 text-white text-xs font-bold rounded-xl active:scale-95 transition-all"
-                        >
-                            Got it
-                        </button>
                     </div>
-                ) : (
-                    <div className="mt-4 flex space-x-2">
-                        <button
-                            onClick={handleInstallClick}
-                            className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-blue-200 active:scale-95"
-                        >
-                            Install Now
-                        </button>
-                        <button
-                            onClick={() => setIsVisible(false)}
-                            className="px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-600 text-xs font-bold rounded-xl transition-all active:scale-95"
-                        >
-                            Later
-                        </button>
+
+                    {/* Content Area */}
+                    <div className="flex-1 min-w-0 pt-0.5">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h3 className="text-base font-bold text-gray-950 truncate tracking-tight">ToolRoom App</h3>
+                                <p className="text-sm text-gray-500 mt-0.5 leading-snug">Install for a seamless experience</p>
+                            </div>
+                            <button
+                                onClick={() => setIsVisible(false)}
+                                className="p-1 -mr-1 -mt-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                                aria-label="Close"
+                            >
+                                <FiX className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Actions Area */}
+                        <div className="mt-4">
+                            {isIOS ? (
+                                <div className="bg-gray-50/80 rounded-xl p-3 border border-gray-100/50">
+                                    <div className="flex items-center text-sm text-gray-600">
+                                        <span>Tap</span>
+                                        <div className="px-2 py-1 mx-1.5 bg-white rounded shadow-sm flex items-center justify-center border border-gray-100">
+                                            <FiShare className="text-blue-600 w-4 h-4" />
+                                        </div>
+                                        <span>and select <strong className="font-semibold text-gray-900">Add to Home Screen</strong></span>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsVisible(false)}
+                                        className="mt-3 w-full py-2.5 bg-black hover:bg-gray-900 text-white text-sm font-semibold rounded-xl transition-all active:scale-[0.98]"
+                                    >
+                                        Got it
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleInstallClick}
+                                        className="flex-1 py-2.5 bg-black hover:bg-gray-900 text-white text-sm font-semibold rounded-xl transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
+                                    >
+                                        <FiDownload className="w-4 h-4" />
+                                        Install Now
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );
