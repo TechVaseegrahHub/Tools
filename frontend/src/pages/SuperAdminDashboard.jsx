@@ -3,7 +3,7 @@ import axios from 'axios';
 import {
     FiUsers, FiTool, FiArrowRight, FiRefreshCw, FiToggleLeft, FiToggleRight,
     FiAlertCircle, FiCheckCircle, FiGlobe, FiLock, FiX,
-    FiStar, FiZap, FiShield, FiClock, FiCreditCard
+    FiStar, FiZap, FiShield, FiClock, FiCreditCard, FiEdit2, FiTrash2
 } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 
@@ -410,6 +410,17 @@ const SuperAdminDashboard = () => {
     const [detailLoading, setDetailLoading] = useState(false);
     const [togglingId, setTogglingId] = useState(null);
 
+    // Editing State
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editForm, setEditForm] = useState({ name: '', email: '', phone: '' });
+    const [savingEdit, setSavingEdit] = useState(false);
+
+    // Deleting State
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deletingOrg, setDeletingOrg] = useState(null);
+    const [deleting, setDeleting] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
     const fetchOrgs = async () => {
         setLoading(true);
         try {
@@ -448,6 +459,56 @@ const SuperAdminDashboard = () => {
             toast.error('Failed to toggle org status');
         } finally {
             setTogglingId(null);
+        }
+    };
+
+    const handleEditClick = (org, e) => {
+        e.stopPropagation();
+        setSelectedOrg(org);
+        setEditForm({ name: org.name || '', email: org.email || '', phone: org.phone || '' });
+        setIsEditModalOpen(true);
+    };
+
+    const submitEdit = async (e) => {
+        e.preventDefault();
+        setSavingEdit(true);
+        try {
+            const { data } = await axios.put(`/api/superadmin/orgs/${selectedOrg._id}`, editForm);
+            setOrgs(prev => prev.map(o => o._id === selectedOrg._id ? { ...o, ...editForm } : o));
+            if (orgDetail?.org?._id === selectedOrg._id) {
+                setOrgDetail(prev => ({ ...prev, org: { ...prev.org, ...editForm } }));
+            }
+            toast.success(data.message);
+            setIsEditModalOpen(false);
+        } catch {
+            toast.error('Failed to update organization');
+        } finally {
+            setSavingEdit(false);
+        }
+    };
+
+    const handleDeleteClick = (org, e) => {
+        e.stopPropagation();
+        setDeletingOrg(org);
+        setDeleteConfirmText('');
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        setDeleting(true);
+        try {
+            const { data } = await axios.delete(`/api/superadmin/orgs/${deletingOrg._id}`);
+            setOrgs(prev => prev.filter(o => o._id !== deletingOrg._id));
+            if (selectedOrg?._id === deletingOrg._id) {
+                setSelectedOrg(null);
+                setOrgDetail(null);
+            }
+            toast.success(data.message);
+            setIsDeleteModalOpen(false);
+        } catch {
+            toast.error('Failed to delete organization');
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -562,19 +623,35 @@ const SuperAdminDashboard = () => {
                                                     {org.stats?.tools} tools · {org.stats?.users} users · {org.stats?.transactions} txns
                                                 </p>
                                             </div>
-                                            <button
-                                                onClick={(e) => toggleOrg(org._id, e)}
-                                                disabled={togglingId === org._id}
-                                                className={`ml-4 p-1.5 rounded-lg transition-colors ${org.isActive ? 'text-green-600 hover:bg-green-50' : 'text-red-500 hover:bg-red-50'}`}
-                                                title={org.isActive ? 'Deactivate' : 'Activate'}
-                                            >
-                                                {togglingId === org._id
-                                                    ? <FiRefreshCw className="h-5 w-5 animate-spin" />
-                                                    : org.isActive
-                                                        ? <FiToggleRight className="h-5 w-5" />
-                                                        : <FiToggleLeft className="h-5 w-5" />
-                                                }
-                                            </button>
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    onClick={(e) => handleEditClick(org, e)}
+                                                    className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                                    title="Edit Organization"
+                                                >
+                                                    <FiEdit2 className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => handleDeleteClick(org, e)}
+                                                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                                    title="Delete Organization"
+                                                >
+                                                    <FiTrash2 className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => toggleOrg(org._id, e)}
+                                                    disabled={togglingId === org._id}
+                                                    className={`p-1.5 ml-1 rounded-lg transition-colors ${org.isActive ? 'text-green-600 hover:bg-green-50' : 'text-orange-500 hover:bg-orange-50'}`}
+                                                    title={org.isActive ? 'Deactivate' : 'Activate'}
+                                                >
+                                                    {togglingId === org._id
+                                                        ? <FiRefreshCw className="h-5 w-5 animate-spin" />
+                                                        : org.isActive
+                                                            ? <FiToggleRight className="h-5 w-5" />
+                                                            : <FiToggleLeft className="h-5 w-5" />
+                                                    }
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -642,6 +719,126 @@ const SuperAdminDashboard = () => {
 
             {/* ── SUBSCRIPTION MANAGEMENT TAB ── */}
             {activeTab === 'subscriptions' && <SubscriptionManagement />}
+
+            {/* Edit Modal */}
+            {isEditModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-gray-900">Edit Organization</h3>
+                            <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-1">
+                                <FiX className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={submitEdit} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Organization Name</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={editForm.name}
+                                    onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input
+                                    type="email"
+                                    value={editForm.email}
+                                    onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                <input
+                                    type="text"
+                                    value={editForm.phone}
+                                    onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div className="pt-4 flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={savingEdit}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors disabled:opacity-70"
+                                >
+                                    {savingEdit && <FiRefreshCw className="h-4 w-4 animate-spin" />}
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Modal */}
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-5 bg-red-50 flex items-start gap-4 border-b border-red-100">
+                            <div className="bg-red-100 p-2 rounded-full flex-shrink-0">
+                                <FiAlertCircle className="h-6 w-6 text-red-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-red-900">Delete Organization</h3>
+                                <p className="text-sm text-red-700 mt-1 leading-relaxed">
+                                    Are you absolutely sure you want to delete <strong className="font-semibold text-red-900">{deletingOrg?.name}</strong>?
+                                </p>
+                            </div>
+                        </div>
+                        <div className="px-6 py-5 bg-white">
+                            <div className="bg-red-50 border border-red-100 rounded-xl p-4 mb-5">
+                                <p className="text-sm text-red-800 font-medium mb-1">This action cannot be undone.</p>
+                                <p className="text-xs text-red-600/80">
+                                    All associated users, tool inventory, and transaction history belonging to this organization will be permanently wiped from the database.
+                                </p>
+                            </div>
+
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Please type <strong>DELETE</strong> to confirm.
+                                </label>
+                                <input
+                                    type="text"
+                                    value={deleteConfirmText}
+                                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                    placeholder="Type DELETE here"
+                                    className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => { setIsDeleteModalOpen(false); setDeleteConfirmText(''); }}
+                                    className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={confirmDelete}
+                                    disabled={deleting || deleteConfirmText !== 'DELETE'}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {deleting ? <FiRefreshCw className="h-4 w-4 animate-spin" /> : <FiTrash2 className="h-4 w-4" />}
+                                    Delete Permanently
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

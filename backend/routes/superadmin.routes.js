@@ -1,6 +1,6 @@
 import express from 'express';
 import { protect, authorize } from '../middleware/auth.middleware.js';
-import { listOrgs, getOrgDetails, toggleOrgStatus, resetUserPassword, getSubscriptionStats, getFinanceStats } from '../controllers/superadmin.controller.js';
+import { listOrgs, getOrgDetails, toggleOrgStatus, resetUserPassword, getSubscriptionStats, getFinanceStats, editOrg, deleteOrg } from '../controllers/superadmin.controller.js';
 
 const router = express.Router();
 
@@ -9,6 +9,8 @@ router.use(protect, authorize('SuperAdmin'));
 
 router.get('/orgs', listOrgs);
 router.get('/orgs/:orgId', getOrgDetails);
+router.put('/orgs/:orgId', editOrg);
+router.delete('/orgs/:orgId', deleteOrg);
 router.put('/orgs/:orgId/toggle', toggleOrgStatus);
 router.put('/users/:userId/reset-password', resetUserPassword);
 router.get('/subscriptions', getSubscriptionStats);

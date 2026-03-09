@@ -128,6 +128,57 @@ export const toggleOrgStatus = async (req, res) => {
     }
 };
 
+// @desc    Edit organization details
+// @route   PUT /api/superadmin/orgs/:orgId
+// @access  SuperAdmin only
+export const editOrg = async (req, res) => {
+    try {
+        const { name, email, phone } = req.body;
+
+        const org = await Organization.findById(req.params.orgId);
+        if (!org) return res.status(404).json({ message: 'Organization not found' });
+
+        if (name) org.name = name;
+        if (email) org.email = email;
+        if (phone) org.phone = phone;
+
+        const updatedOrg = await org.save();
+        res.json({ message: 'Organization updated successfully', org: updatedOrg });
+    } catch (error) {
+        console.error('Error in editOrg:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Delete organization and all associated data
+// @route   DELETE /api/superadmin/orgs/:orgId
+// @access  SuperAdmin only
+export const deleteOrg = async (req, res) => {
+    try {
+        const orgId = req.params.orgId;
+        const org = await Organization.findById(orgId);
+
+        if (!org) {
+            return res.status(404).json({ message: 'Organization not found' });
+        }
+
+        // Cascading delete: Remove all associated tools, users, and transactions
+        await Promise.all([
+            User.deleteMany({ orgId: org._id }),
+            Tool.deleteMany({ orgId: org._id }),
+            Transaction.deleteMany({ orgId: org._id })
+        ]);
+
+        // Finally delete the organization document itself
+        await Organization.findByIdAndDelete(org._id);
+
+        res.json({ message: 'Organization and all associated data deleted successfully' });
+    } catch (error) {
+        console.error('Error in deleteOrg:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 // @desc    Reset a user's password (SuperAdmin force-reset)
 // @route   PUT /api/superadmin/users/:userId/reset-password
 // @access  SuperAdmin only
