@@ -364,7 +364,7 @@ const OrgSettings = () => {
                             <div className="relative z-10">
                                 <p className="text-purple-300 text-xs font-semibold uppercase tracking-wider mb-1">Premium Plan</p>
                                 <div className="flex items-baseline gap-1 mb-1">
-                                    <span className="text-white text-3xl font-bold">₹1</span>
+                                    <span className="text-white text-3xl font-bold">₹99</span>
                                     <span className="text-purple-300 text-sm">/ month</span>
                                 </div>
                                 <p className="text-purple-200 text-xs">Billed monthly · Cancel anytime</p>
