@@ -95,19 +95,21 @@ const Transactions = () => {
 
   const confirmCheckIn = async () => {
     if (!transactionToCheckIn) return;
+    setIsCheckingIn(true);
 
     try {
-      setIsCheckingIn(true);
       const response = await axios.put(`/api/transactions/${transactionToCheckIn._id}/checkin`, {});
 
-      // Add the check-in transaction to the list
-      const checkInTransaction = {
-        ...response.data,
-        _id: `checkin-${Date.now()}`, // Create a unique ID for the check-in
+      // Update the existing row in-place — fill in checkinDate and flip status
+      const updatedRow = {
+        ...transactionToCheckIn,
+        checkinDate: response.data.eventTimestamp || new Date().toISOString(),
+        status: 'Available',
+        action: 'Checked In',
       };
 
-      setTransactions(prev => [checkInTransaction, ...prev]);
-      setFilteredTransactions(prev => [checkInTransaction, ...prev]);
+      setTransactions(prev => prev.map(t => t._id === transactionToCheckIn._id ? updatedRow : t));
+      setFilteredTransactions(prev => prev.map(t => t._id === transactionToCheckIn._id ? updatedRow : t));
 
       toast.success('Tool checked in successfully!');
       setTransactionToCheckIn(null);
@@ -129,9 +131,13 @@ const Transactions = () => {
   };
 
   const handleTransactionComplete = (newTransaction) => {
-    // Add the new transaction to the list
-    setTransactions(prev => [newTransaction, ...prev]);
-    setFilteredTransactions(prev => [newTransaction, ...prev]);
+    // Map eventTimestamp → checkoutDate so the Checked Out column shows correctly
+    const mapped = {
+      ...newTransaction,
+      checkoutDate: newTransaction.checkoutDate || newTransaction.eventTimestamp,
+    };
+    setTransactions(prev => [mapped, ...prev]);
+    setFilteredTransactions(prev => [mapped, ...prev]);
   };
 
   // Format date to "Oct 23, 2025, 4:30 PM"
@@ -214,9 +220,10 @@ const Transactions = () => {
         </div>
       </div>
 
-      {/* Transactions Table */}
+      {/* Transactions Table / Mobile Cards */}
       <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full min-w-[640px]">
             <thead className="bg-gray-50">
               <tr className="text-left">
@@ -306,6 +313,74 @@ const Transactions = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="md:hidden flex flex-col divide-y divide-gray-100">
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="flex flex-col items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mb-2"></div>
+                <p className="text-gray-600">Loading transactions...</p>
+              </div>
+            </div>
+          ) : filteredTransactions.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="flex flex-col items-center justify-center">
+                <FiArrowRight className="h-12 w-12 text-gray-300 mb-3" />
+                <p className="text-gray-600">
+                  {searchTerm ? 'No transactions match your search.' : 'No transactions found.'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            filteredTransactions.map((transaction) => (
+              <div key={transaction._id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-start justify-between mb-3 border-b border-gray-100 pb-3">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 text-sm">{transaction.toolName}</h3>
+                    <p className="text-xs text-gray-500 font-mono mt-0.5">{transaction.toolId}</p>
+                  </div>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusBadgeClass(transaction.status)}`}>
+                    {transaction.status}
+                  </span>
+                </div>
+
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-500 font-medium">User</span>
+                    <div className="text-right">
+                      <div className="text-gray-900 text-xs font-semibold">{transaction.userName}</div>
+                      <div className="text-gray-500 font-mono text-[10px]">{transaction.userEmail}</div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-500 font-medium">Checked Out</span>
+                    <span className="text-gray-900 text-xs">{transaction.checkoutDate ? formatDateTime(transaction.checkoutDate) : '—'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-500 font-medium">Checked In</span>
+                    <span className="text-gray-900 text-xs">{transaction.checkinDate ? formatDateTime(transaction.checkinDate) : '—'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-500 font-medium">Due Date</span>
+                    <span className="text-gray-900 text-xs">{transaction.dueDate ? formatDateTime(transaction.dueDate) : '—'}</span>
+                  </div>
+                </div>
+
+                {canManage && transaction.action === 'Checked Out' && transaction.status !== 'Available' && (
+                  <div className="pt-2">
+                    <button
+                      onClick={() => handleCheckIn(transaction)}
+                      className="w-full flex justify-center items-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                    >
+                      <FiArrowLeft className="mr-1 h-4 w-4" /> Check In Tool
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </div>
 

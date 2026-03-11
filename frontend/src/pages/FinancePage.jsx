@@ -188,8 +188,8 @@ const FinancePage = () => {
                         </button>
                     </div>
                 </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full min-w-[640px] text-sm">
                         <thead className="bg-gray-50 text-xs text-gray-400 uppercase tracking-wider">
                             <tr>
                                 <th className="px-6 py-3 text-left font-semibold">Month</th>
@@ -238,6 +238,64 @@ const FinancePage = () => {
                             </tfoot>
                         )}
                     </table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="md:hidden flex flex-col divide-y divide-gray-100">
+                    {displayedMonths.map(m => (
+                        <div key={m.month} className={`p-4 transition-colors ${filterMonth === m.month ? 'bg-blue-50/50' : ''}`}>
+                            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
+                                <span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 text-sm font-bold flex items-center justify-center">{m.month}</span>
+                                <span className="font-bold text-gray-800 text-lg">{m.label}</span>
+                            </div>
+
+                            <dl className="grid grid-cols-2 gap-4">
+                                <div className="bg-gray-50 rounded-lg p-3">
+                                    <dt className="text-xs text-gray-500 font-medium mb-1">New Clients</dt>
+                                    <dd className="font-semibold text-gray-900">
+                                        {m.newClients > 0
+                                            ? <span className="text-purple-700">{m.newClients}</span>
+                                            : <span className="text-gray-400">—</span>}
+                                    </dd>
+                                </div>
+                                <div className="bg-gray-50 rounded-lg p-3">
+                                    <dt className="text-xs text-gray-500 font-medium mb-1">Payments</dt>
+                                    <dd className="font-semibold text-gray-900">
+                                        {m.paymentsCount > 0
+                                            ? <span className="text-blue-700">{m.paymentsCount}</span>
+                                            : <span className="text-gray-400">—</span>}
+                                    </dd>
+                                </div>
+                                <div className="bg-gray-50 rounded-lg p-3 col-span-2">
+                                    <dt className="text-xs text-gray-500 font-medium mb-1">Revenue</dt>
+                                    <dd className="font-black text-green-600 text-lg">
+                                        {m.revenue > 0 ? fmt(m.revenue) : <span className="text-gray-400 text-base font-normal">—</span>}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </div>
+                    ))}
+
+                    {/* Mobile Totals Footer */}
+                    {filterMonth === 'all' && (
+                        <div className="p-5 bg-gray-50 border-t-4 border-gray-200">
+                            <h3 className="font-bold text-gray-800 mb-4 text-center">Total ({year})</h3>
+                            <dl className="space-y-3">
+                                <div className="flex justify-between items-center border-b border-gray-200 pb-2">
+                                    <dt className="text-sm text-gray-600 font-medium">New Clients</dt>
+                                    <dd className="font-bold text-gray-800 px-3 py-1 bg-white rounded-md shadow-sm">{summary.yearNewClients}</dd>
+                                </div>
+                                <div className="flex justify-between items-center border-b border-gray-200 pb-2">
+                                    <dt className="text-sm text-gray-600 font-medium">Payments</dt>
+                                    <dd className="font-bold text-gray-800 px-3 py-1 bg-white rounded-md shadow-sm">{data.months.reduce((s, m) => s + m.premiumCount, 0)}</dd>
+                                </div>
+                                <div className="flex justify-between items-center pt-1">
+                                    <dt className="text-sm text-gray-600 font-medium">Total Revenue</dt>
+                                    <dd className="font-black text-green-600 text-xl px-3 py-1 bg-green-50 rounded-md border border-green-100">{fmt(summary.yearRevenue)}</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

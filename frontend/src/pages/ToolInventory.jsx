@@ -444,7 +444,7 @@ const ToolInventory = () => {
           </div>
         ) : (
           <div className="card overflow-hidden">
-            <div className="overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full min-w-[640px]">
                 <thead className="bg-gray-50">
                   <tr className="text-left">
@@ -457,6 +457,22 @@ const ToolInventory = () => {
                   {[...Array(ITEMS_PER_PAGE)].map((_, i) => <SkeletonRow key={i} />)}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Skeletons */}
+            <div className="md:hidden flex flex-col divide-y divide-gray-100">
+              {[...Array(ITEMS_PER_PAGE)].map((_, i) => (
+                <div key={i} className="p-4 animate-pulse">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                    </div>
+                  </div>
+                  <div className="h-8 bg-gray-200 rounded w-full mt-2"></div>
+                </div>
+              ))}
             </div>
           </div>
         )
@@ -504,7 +520,7 @@ const ToolInventory = () => {
           ) : (
             /* List View */
             <div className="card overflow-hidden">
-              <div className="overflow-x-auto">
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full min-w-[640px]">
                   <thead className="bg-gray-50">
                     <tr className="text-left">
@@ -573,6 +589,72 @@ const ToolInventory = () => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Cards for List View */}
+              <div className="md:hidden flex flex-col divide-y divide-gray-100">
+                {tools.map((tool) => (
+                  <div key={tool._id} className="p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="flex-shrink-0">
+                        {tool.image ? (
+                          <img
+                            src={tool.image}
+                            alt={tool.toolName}
+                            className="w-12 h-12 object-cover rounded-lg border border-gray-100"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.parentElement.innerHTML = '<div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200"><FiTool className="text-gray-400" /></div>';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                            <FiTool className="text-gray-400 h-5 w-5" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-semibold text-gray-900 text-sm line-clamp-1 pr-2">{tool.toolName}</h3>
+                          <span className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${statusColor(tool.status)}`}>
+                            {tool.status}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-gray-500 font-mono mt-0.5">{tool.toolId}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 mb-3 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-gray-500 font-medium">Category</span>
+                        <span className="text-gray-900">{tool.category?.name || '—'}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-gray-500 font-medium">Location</span>
+                        <span className="text-gray-900 truncate pl-2">{tool.location || '—'}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleOpenModal(tool)}
+                        className="flex-1 py-1.5 px-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors flex items-center justify-center gap-1 bg-white"
+                      >
+                        {canManage ? <FiEdit className="h-4 w-4" /> : <FiSearch className="h-4 w-4" />}
+                        {canManage ? 'Edit' : 'View'}
+                      </button>
+
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleDeleteTool(tool)}
+                          className="flex-1 py-1.5 px-3 border border-red-200 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors flex items-center justify-center gap-1"
+                        >
+                          <FiTrash2 className="h-4 w-4" /> Delete
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

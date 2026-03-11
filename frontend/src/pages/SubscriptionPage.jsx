@@ -85,8 +85,8 @@ const SuperAdminSubscriptionView = () => {
                         <FiRefreshCw className="h-3.5 w-3.5" /> Refresh
                     </button>
                 </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full min-w-[640px] text-sm">
                         <thead className="bg-gray-50 text-xs text-gray-400 uppercase tracking-wider">
                             <tr>
                                 <th className="px-6 py-3 text-left font-semibold">Organization</th>
@@ -114,6 +114,41 @@ const SuperAdminSubscriptionView = () => {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="md:hidden flex flex-col divide-y divide-gray-100">
+                    {data?.orgs?.map(org => (
+                        <div key={org._id} className="p-4 hover:bg-gray-50 transition-colors">
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 className="font-semibold text-gray-900 text-sm">{org.name}</h3>
+                                    <p className="text-xs text-gray-500 font-mono mt-0.5">{org.slug}</p>
+                                </div>
+                                <div>{statusBadge(org.subscriptionPlan, org.subscriptionStatus)}</div>
+                            </div>
+
+                            <div className="space-y-2 mb-2 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-500 font-medium">Renewal / End</span>
+                                    <span className="text-gray-900 text-xs font-semibold">{formatDate(org.currentPeriodEnd)}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-500 font-medium">Users</span>
+                                    <span className="text-gray-900 text-xs">{org.stats?.users ?? 0}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-500 font-medium">Tools</span>
+                                    <span className="text-gray-900 text-xs">{org.stats?.tools ?? 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    {(!data?.orgs || data.orgs.length === 0) && (
+                        <div className="p-8 text-center text-gray-400">
+                            No organizations found
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

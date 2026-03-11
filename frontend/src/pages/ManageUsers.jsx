@@ -18,6 +18,16 @@ const ManageUsers = () => {
 
   const { user: currentUser } = useAuth();
 
+  // Derive a deterministic short ID: 2 uppercase letters + 4 digits (e.g. "XZ8527")
+  const formatUserId = (id) => {
+    if (!id) return '------';
+    const hex = id.toString();
+    const l1 = String.fromCharCode(65 + (parseInt(hex.slice(0, 2), 16) % 26));
+    const l2 = String.fromCharCode(65 + (parseInt(hex.slice(2, 4), 16) % 26));
+    const nums = String(parseInt(hex.slice(-4), 16) % 10000).padStart(4, '0');
+    return `${l1}${l2}${nums}`;
+  };
+
   // Helper function to ensure we always have an array
   const ensureArray = (data) => {
     if (Array.isArray(data)) {
@@ -182,9 +192,10 @@ const ManageUsers = () => {
         </div>
       </div>
 
-      {/* Users Table */}
+      {/* Users Table / Mobile Cards */}
       <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full min-w-[640px]">
             <thead className="bg-gray-50">
               <tr className="text-left">
@@ -232,7 +243,7 @@ const ManageUsers = () => {
                         </div>
                         <div className="ml-3">
                           <div className="font-medium text-gray-900">{user.name}</div>
-                          <div className="text-sm text-gray-500">ID: {user._id}</div>
+                          <div className="text-sm text-gray-500">{formatUserId(user._id)}</div>
                         </div>
                       </div>
                     </td>
@@ -272,6 +283,82 @@ const ManageUsers = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="md:hidden flex flex-col divide-y divide-gray-100">
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="flex flex-col items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mb-2"></div>
+                <p className="text-gray-600">Loading users...</p>
+              </div>
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="flex flex-col items-center justify-center">
+                <FiUsers className="h-12 w-12 text-gray-300 mb-3" />
+                <p className="text-gray-600">
+                  {searchTerm ? 'No users match your search.' : 'No users found.'}
+                </p>
+                <button
+                  onClick={() => handleOpenModal()}
+                  className="mt-3 btn-primary flex items-center"
+                >
+                  <FiPlus className="mr-2" /> Add Your First User
+                </button>
+              </div>
+            </div>
+          ) : (
+            filteredUsers.map((user) => (
+              <div key={user._id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gray-200 rounded-full p-2 flex-shrink-0">
+                      <FiUser className="h-5 w-5 text-gray-600" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-900">{user.name}</div>
+                      <div className="text-xs text-gray-500 font-mono">{formatUserId(user._id)}</div>
+                    </div>
+                  </div>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getRoleColor(user.role)}`}>
+                    {user.role}
+                  </span>
+                </div>
+
+                <div className="space-y-2 mb-3">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-500 font-medium">Email</span>
+                    <span className="text-gray-900 truncate ml-4 font-mono text-xs">{user.email}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-500 font-medium">Status</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-800">
+                      Active
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-end border-t border-gray-100 pt-3 gap-2 mt-1">
+                  <button
+                    onClick={() => handleOpenModal(user)}
+                    className="flex-1 py-1.5 px-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
+                  >
+                    <FiEdit className="h-4 w-4" /> Edit
+                  </button>
+                  {currentUser?._id !== user._id && (
+                    <button
+                      onClick={() => handleDeleteUser(user)}
+                      className="flex-1 py-1.5 px-3 border border-red-200 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <FiTrash2 className="h-4 w-4" /> Delete
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
