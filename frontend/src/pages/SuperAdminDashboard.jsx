@@ -46,10 +46,15 @@ const DaysRing = ({ days, max = 31 }) => {
 };
 
 /* ─── Plan badge ──────────────────────────────────────── */
-const PlanBadge = ({ plan }) =>
-    plan === 'premium'
-        ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700"><FiStar className="h-3 w-3" />Premium</span>
-        : <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">Free</span>;
+const PlanBadge = ({ plan }) => {
+    if (plan === 'premium') {
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700"><FiStar className="h-3 w-3" />Premium</span>;
+    }
+    if (plan === 'free_premium') {
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700"><FiStar className="h-3 w-3" />Free Premium</span>;
+    }
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">Free</span>;
+};
 
 /* ─── Status dot badge ────────────────────────────────── */
 const StatusBadge = ({ status }) => {
@@ -163,13 +168,13 @@ const SubscriptionManagement = () => {
     useEffect(() => { fetchData(); }, []);
 
     const filtered = data?.orgs?.filter(o => {
-        if (filter === 'premium') return o.subscriptionPlan === 'premium';
-        if (filter === 'free') return o.subscriptionPlan !== 'premium';
+        if (filter === 'premium') return o.subscriptionPlan === 'premium' || o.subscriptionPlan === 'free_premium';
+        if (filter === 'free') return o.subscriptionPlan !== 'premium' && o.subscriptionPlan !== 'free_premium';
         return true;
     }) ?? [];
 
     const days = selectedOrg ? daysRemaining(selectedOrg.currentPeriodEnd) : 0;
-    const isPremium = selectedOrg?.subscriptionPlan === 'premium';
+    const isPremium = selectedOrg?.subscriptionPlan === 'premium' || selectedOrg?.subscriptionPlan === 'free_premium';
 
     return (
         <div className="space-y-6">
@@ -248,7 +253,7 @@ const SubscriptionManagement = () => {
                                             <PlanBadge plan={org.subscriptionPlan} />
                                         </div>
                                         <p className="text-xs text-gray-400 mt-0.5 truncate">{org.slug}</p>
-                                        {org.subscriptionPlan === 'premium' && (
+                                        {(org.subscriptionPlan === 'premium' || org.subscriptionPlan === 'free_premium') && (
                                             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                                 <StatusBadge status={org.subscriptionStatus} />
                                                 {org.currentPeriodEnd && (
@@ -316,7 +321,7 @@ const SubscriptionManagement = () => {
                                         {/* 6-stat grid */}
                                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                             {[
-                                                { label: 'Plan', value: 'Premium ✦' },
+                                                { label: 'Plan', value: selectedOrg.subscriptionPlan === 'free_premium' ? 'Free Premium ✦' : 'Premium ✦' },
                                                 { label: 'Status', value: selectedOrg.subscriptionStatus ? selectedOrg.subscriptionStatus.charAt(0).toUpperCase() + selectedOrg.subscriptionStatus.slice(1) : '—' },
                                                 { label: 'Days Used', value: selectedOrg.currentPeriodEnd ? `${30 - days} / 30` : '—' },
                                                 {
@@ -410,16 +415,21 @@ const SuperAdminDashboard = () => {
     const [detailLoading, setDetailLoading] = useState(false);
     const [togglingId, setTogglingId] = useState(null);
 
-    // Editing State
+    // Edit Modal State
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editForm, setEditForm] = useState({ name: '', email: '', phone: '' });
     const [savingEdit, setSavingEdit] = useState(false);
 
-    // Deleting State
+    // Delete Modal State
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deletingOrg, setDeletingOrg] = useState(null);
     const [deleting, setDeleting] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+    // Free Upgrade Modal State
+    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+    const [upgradeDuration, setUpgradeDuration] = useState('1_month');
+    const [upgrading, setUpgrading] = useState(false);
 
     const fetchOrgs = async () => {
         setLoading(true);
@@ -509,6 +519,28 @@ const SuperAdminDashboard = () => {
             toast.error('Failed to delete organization');
         } finally {
             setDeleting(false);
+        }
+    };
+
+    const handleFreeUpgrade = async () => {
+        if (!selectedOrg) return;
+        setUpgrading(true);
+        try {
+            const { data } = await axios.put(`/api/superadmin/orgs/${selectedOrg._id}/free-upgrade`, {
+                duration: upgradeDuration
+            });
+            // Update local state to reflect premium status immediately
+            setOrgs(prev => prev.map(o => o._id === selectedOrg._id ? { ...o, subscriptionPlan: 'premium', subscriptionStatus: 'active' } : o));
+            setSelectedOrg(data.org);
+            if (orgDetail?.org?._id === selectedOrg._id) {
+                setOrgDetail(prev => ({ ...prev, org: data.org }));
+            }
+            toast.success(data.message);
+            setIsUpgradeModalOpen(false);
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to upgrade organization');
+        } finally {
+            setUpgrading(false);
         }
     };
 
@@ -710,6 +742,7 @@ const SuperAdminDashboard = () => {
                                             </div>
                                         )}
                                     </div>
+
                                 </div>
                             ) : null}
                         </div>
@@ -759,7 +792,7 @@ const SuperAdminDashboard = () => {
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                 />
                             </div>
-                            <div className="pt-4 flex justify-end gap-3">
+                            <div className="pt-4 flex justify-end gap-3 border-b border-gray-100 pb-4 mb-4">
                                 <button
                                     type="button"
                                     onClick={() => setIsEditModalOpen(false)}
@@ -775,6 +808,39 @@ const SuperAdminDashboard = () => {
                                     {savingEdit && <FiRefreshCw className="h-4 w-4 animate-spin" />}
                                     Save Changes
                                 </button>
+                            </div>
+
+                            {/* Free Premium Override Section inside Edit Modal */}
+                            <div className="bg-amber-50 rounded-xl p-4 border border-amber-100 mt-2">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <FiStar className="h-4 w-4 text-amber-500" />
+                                    <h4 className="font-semibold text-sm text-amber-900">Administrative Override</h4>
+                                </div>
+                                <p className="text-xs text-amber-700 mb-3">
+                                    Manually grant or extend Free Premium access without logging a payment transaction.
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <select
+                                        value={upgradeDuration}
+                                        onChange={(e) => setUpgradeDuration(e.target.value)}
+                                        className="flex-1 px-3 py-2 text-sm border border-amber-200 rounded-lg bg-white text-amber-900 focus:ring-2 focus:ring-amber-500 outline-none"
+                                    >
+                                        <option value="1_month">1 Month</option>
+                                        <option value="1_year">1 Year</option>
+                                        <option value="lifetime">Lifetime</option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsEditModalOpen(false); // close edit to open confirmation, or just submit
+                                            handleFreeUpgrade();
+                                        }}
+                                        disabled={upgrading}
+                                        className="px-3 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-white text-sm font-medium rounded-lg hover:from-amber-600 hover:to-yellow-600 transition-colors whitespace-nowrap"
+                                    >
+                                        {upgrading ? 'Upgrading...' : 'Apply Premium Override'}
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -833,6 +899,59 @@ const SuperAdminDashboard = () => {
                                 >
                                     {deleting ? <FiRefreshCw className="h-4 w-4 animate-spin" /> : <FiTrash2 className="h-4 w-4" />}
                                     Delete Permanently
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Free Upgrade Modal */}
+            {isUpgradeModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-amber-50 to-yellow-50">
+                            <div className="flex items-center gap-2">
+                                <FiStar className="h-5 w-5 text-yellow-600" />
+                                <h3 className="text-lg font-bold text-gray-900">Premium Upgrade</h3>
+                            </div>
+                            <button onClick={() => setIsUpgradeModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-1">
+                                <FiX className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-5">
+                            <div>
+                                <p className="text-sm text-gray-600 mb-4">
+                                    Manually grant Premium access to <strong className="text-gray-900">{selectedOrg?.name}</strong>. This bypasses payment processing and grants immediate access.
+                                </p>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Upgrade Duration</label>
+                                <select
+                                    value={upgradeDuration}
+                                    onChange={(e) => setUpgradeDuration(e.target.value)}
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white"
+                                >
+                                    <option value="1_month">1 Month</option>
+                                    <option value="1_year">1 Year</option>
+                                    <option value="lifetime">Lifetime</option>
+                                </select>
+                            </div>
+
+                            <div className="pt-2 flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsUpgradeModalOpen(false)}
+                                    className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleFreeUpgrade}
+                                    disabled={upgrading}
+                                    className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 rounded-xl transition-all shadow-sm disabled:opacity-70"
+                                >
+                                    {upgrading ? <FiRefreshCw className="h-4 w-4 animate-spin" /> : <FiStar className="h-4 w-4" />}
+                                    Confirm Upgrade
                                 </button>
                             </div>
                         </div>

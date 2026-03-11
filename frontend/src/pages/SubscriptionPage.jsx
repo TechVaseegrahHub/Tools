@@ -158,7 +158,8 @@ const AdminSubscriptionView = () => {
         }
     };
 
-    const isPremium = org?.subscriptionPlan === 'premium' && org?.subscriptionStatus === 'active';
+    const isPremium = (org?.subscriptionPlan === 'premium' || org?.subscriptionPlan === 'free_premium') && org?.subscriptionStatus === 'active';
+    const isFreePremium = org?.subscriptionPlan === 'free_premium' && org?.subscriptionStatus === 'active';
     const isCancelled = org?.subscriptionStatus === 'cancelled';
     const daysRemaining = org?.currentPeriodEnd
         ? Math.max(0, Math.ceil((new Date(org.currentPeriodEnd) - new Date()) / (1000 * 60 * 60 * 24)))
@@ -197,9 +198,9 @@ const AdminSubscriptionView = () => {
                         </div>
                         <div>
                             <p className="text-white/60 text-xs font-semibold uppercase tracking-widest">Current Plan</p>
-                            <h2 className="text-white text-2xl font-black">{isPremium ? 'Premium' : 'Free'} Plan</h2>
+                            <h2 className="text-white text-2xl font-black">{isFreePremium ? 'Free Premium' : isPremium ? 'Premium' : 'Free'} Plan</h2>
                             <p className="text-white/70 text-sm mt-0.5">
-                                {isPremium ? '₹99 / month — billed monthly' : 'Free forever — up to 10 tools'}
+                                {isFreePremium ? 'Manually granted — unlimited tools' : isPremium ? '₹99 / month — billed monthly' : 'Free forever — up to 10 tools'}
                             </p>
                         </div>
                     </div>
@@ -237,7 +238,7 @@ const AdminSubscriptionView = () => {
                     </div>
                     <div className="bg-white border border-green-100 rounded-2xl p-5 text-center shadow-sm">
                         <FiTrendingUp className="h-5 w-5 text-green-500 mx-auto mb-2" />
-                        <p className="text-3xl font-black text-green-700">₹99</p>
+                        <p className="text-3xl font-black text-green-700">{isFreePremium ? '₹0' : '₹99'}</p>
                         <p className="text-xs text-green-400 font-semibold mt-1">Monthly Charge</p>
                     </div>
                     <div className="bg-white border border-purple-100 rounded-2xl p-5 text-center shadow-sm">
@@ -305,9 +306,9 @@ const AdminSubscriptionView = () => {
                     </div>
                     <div className="p-6 space-y-1">
                         {[
-                            { label: 'Plan', value: isPremium ? 'Premium' : 'Free' },
-                            { label: 'Billing Cycle', value: isPremium ? 'Monthly' : '—' },
-                            { label: 'Amount', value: isPremium ? '₹99 / month' : '₹0' },
+                            { label: 'Plan', value: isFreePremium ? 'Free Premium' : isPremium ? 'Premium' : 'Free' },
+                            { label: 'Billing Cycle', value: isFreePremium ? '—' : isPremium ? 'Monthly' : '—' },
+                            { label: 'Amount', value: isFreePremium ? '₹0' : isPremium ? '₹99 / month' : '₹0' },
                             { label: isCancelled ? 'Access Ends' : 'Next Renewal', value: formatDate(org?.currentPeriodEnd) },
                         ].map(({ label, value }) => (
                             <div key={label} className="flex items-center justify-between py-2.5 border-b border-gray-50">
@@ -377,7 +378,7 @@ const AdminSubscriptionView = () => {
                         <FiZap className="h-4 w-4" /> Upgrade to Premium — ₹99/month
                     </button>
                 )}
-                {isPremium && !isCancelled && (
+                {isPremium && !isCancelled && !isFreePremium && (
                     <button onClick={() => setShowCancelConfirm(true)}
                         className="flex items-center gap-2 px-5 py-2.5 border border-red-200 text-red-600 font-semibold rounded-xl hover:bg-red-50 transition-all">
                         <FiXCircle className="h-4 w-4" /> Cancel Subscription
@@ -390,29 +391,31 @@ const AdminSubscriptionView = () => {
             </div>
 
             {/* Cancel Confirm Modal */}
-            {showCancelConfirm && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="bg-red-100 p-2.5 rounded-xl"><FiAlertTriangle className="h-5 w-5 text-red-600" /></div>
-                            <button onClick={() => setShowCancelConfirm(false)} className="text-gray-400 hover:text-gray-600"><FiX className="h-5 w-5" /></button>
-                        </div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">Cancel Subscription?</h3>
-                        <p className="text-sm text-gray-500 mb-6">
-                            You'll retain Premium access until <strong>{formatDate(org?.currentPeriodEnd)}</strong>. After that, your account reverts to the Free plan (10 tool limit).
-                        </p>
-                        <div className="flex gap-3">
-                            <button onClick={() => setShowCancelConfirm(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all">
-                                Keep Plan
-                            </button>
-                            <button onClick={handleCancel} disabled={cancelling} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-all disabled:opacity-60">
-                                {cancelling ? <FiRefreshCw className="animate-spin h-4 w-4" /> : null}
-                                {cancelling ? 'Cancelling…' : 'Yes, Cancel'}
-                            </button>
+            {
+                showCancelConfirm && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+                            <div className="flex items-start justify-between mb-4">
+                                <div className="bg-red-100 p-2.5 rounded-xl"><FiAlertTriangle className="h-5 w-5 text-red-600" /></div>
+                                <button onClick={() => setShowCancelConfirm(false)} className="text-gray-400 hover:text-gray-600"><FiX className="h-5 w-5" /></button>
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-2">Cancel Subscription?</h3>
+                            <p className="text-sm text-gray-500 mb-6">
+                                You'll retain Premium access until <strong>{formatDate(org?.currentPeriodEnd)}</strong>. After that, your account reverts to the Free plan (10 tool limit).
+                            </p>
+                            <div className="flex gap-3">
+                                <button onClick={() => setShowCancelConfirm(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all">
+                                    Keep Plan
+                                </button>
+                                <button onClick={handleCancel} disabled={cancelling} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-all disabled:opacity-60">
+                                    {cancelling ? <FiRefreshCw className="animate-spin h-4 w-4" /> : null}
+                                    {cancelling ? 'Cancelling…' : 'Yes, Cancel'}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} onSuccess={() => { setShowUpgrade(false); fetchOrg(); }} />
         </div>

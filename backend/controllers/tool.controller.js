@@ -1,6 +1,7 @@
 import Tool from '../models/tool.model.js';
 import Category from '../models/category.model.js';
 import Organization from '../models/organization.model.js';
+import mongoose from 'mongoose';
 
 // ─── In-memory cache ───────────────────────────────────────────────
 // Caches tool query results for 60s to avoid repeated Atlas round-trips.
@@ -8,7 +9,7 @@ import Organization from '../models/organization.model.js';
 const toolCache = new Map();
 const CACHE_TTL_MS = 60 * 1000;
 
-const getCacheKey = (orgId, search, page, limit) => `${orgId}|${search}|${page}|${limit}`;
+const getCacheKey = (orgId, search, page, limit, category) => `${orgId}|${search}|${page}|${limit}|${category || 'ALL'}`;
 
 const getFromCache = (key) => {
   const entry = toolCache.get(key);
@@ -32,26 +33,37 @@ export const invalidateToolCache = (orgId) => {
 };
 // ───────────────────────────────────────────────────────────────────
 
-// @desc    Get tools with pagination, search, and in-memory cache (scoped to org)
-// @route   GET /api/tools?page=1&limit=8&search=keyword
+// @desc    Get tools with pagination, search, category filter, and in-memory cache (scoped to org)
+// @route   GET /api/tools?page=1&limit=8&search=keyword&category=id
 // @access  Private
 export const getTools = async (req, res) => {
   try {
     const orgId = req.user.orgId;
     const keyword = req.query.search ? req.query.search.trim() : '';
+    const category = req.query.category && req.query.category !== 'ALL' ? req.query.category : null;
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 8));
     const skip = (page - 1) * limit;
 
-    const cacheKey = getCacheKey(orgId, keyword, page, limit);
+    const cacheKey = getCacheKey(orgId, keyword, page, limit, category);
+    console.log("AAYUDHA GETTOOLS QUERY:", { orgId, keyword, category, page, limit, cacheKey });
+
     const cached = getFromCache(cacheKey);
     if (cached) {
-      console.log('Cache HIT:', cacheKey);
+      console.log('Cache HIT:', cacheKey, "returned", cached.tools.length, "tools");
       return res.json(cached);
     }
     console.log('Cache MISS:', cacheKey);
 
     let query = { orgId };
+    if (category) {
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        query.category = new mongoose.Types.ObjectId(category);
+      } else {
+        // If it's not a valid object ID, ensure the query finds nothing
+        query.category = null;
+      }
+    }
     if (keyword) {
       query.$or = [
         { toolName: { $regex: keyword, $options: 'i' } },
@@ -59,12 +71,15 @@ export const getTools = async (req, res) => {
       ];
     }
 
+    console.log("AAYUDHA MONGOOSE QUERY OBJECT:", JSON.stringify(query));
+
     const [totalCount, tools] = await Promise.all([
       Tool.countDocuments(query),
       Tool.find(query).populate('category', 'name').sort({ _id: -1 }).skip(skip).limit(limit)
     ]);
 
     const result = { tools, totalCount, totalPages: Math.ceil(totalCount / limit), currentPage: page, limit };
+    console.log("AAYUDHA RESULTS COUNT:", result.tools.length);
     setCache(cacheKey, result);
     res.json(result);
   } catch (error) {

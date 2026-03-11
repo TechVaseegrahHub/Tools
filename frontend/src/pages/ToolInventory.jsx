@@ -45,6 +45,11 @@ const ToolInventory = () => {
   const [toolToDelete, setToolToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Category state
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState({ id: 'ALL', name: 'All Categories' });
+  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -69,9 +74,9 @@ const ToolInventory = () => {
   };
 
   // Silently prefetch a page into the backend cache — fire and forget
-  const silentPrefetch = (page, search = searchTerm) => {
+  const silentPrefetch = (page, search = searchTerm, categoryId = selectedCategory.id) => {
     if (page < 1) return;
-    axios.get(`/api/tools?search=${encodeURIComponent(search)}&page=${page}&limit=${ITEMS_PER_PAGE}`)
+    axios.get(`/api/tools?search=${encodeURIComponent(search)}&page=${page}&limit=${ITEMS_PER_PAGE}&category=${encodeURIComponent(categoryId)}`)
       .catch(() => { }); // ignore errors — best-effort only
   };
 
@@ -80,8 +85,10 @@ const ToolInventory = () => {
       setLoading(true);
       setError(null);
       const { data } = await axios.get(
-        `/api/tools?search=${encodeURIComponent(searchTerm)}&page=${page}&limit=${ITEMS_PER_PAGE}`
+        `/api/tools?search=${encodeURIComponent(searchTerm)}&page=${page}&limit=${ITEMS_PER_PAGE}&category=${encodeURIComponent(selectedCategory.id)}`
       );
+
+      console.log("FETCHED TOOLS DATA AAYUDHA: ", { searchTerm, page, limit: ITEMS_PER_PAGE, category: selectedCategory.id, data });
 
       if (data && Array.isArray(data.tools)) {
         setTools(data.tools);
@@ -90,8 +97,8 @@ const ToolInventory = () => {
         setCurrentPage(data.currentPage || 1);
 
         // Prefetch next + prev pages into backend cache while user reads this page
-        silentPrefetch(page + 1, searchTerm);
-        if (page > 1) silentPrefetch(page - 1, searchTerm);
+        silentPrefetch(page + 1, searchTerm, selectedCategory.id);
+        if (page > 1) silentPrefetch(page - 1, searchTerm, selectedCategory.id);
       } else {
         setTools([]);
         setError('Received invalid data from server.');
@@ -114,7 +121,7 @@ const ToolInventory = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Reset to page 1 when searchTerm changes, then fetch
+  // Reset to page 1 when search or category changes, then fetch
   useEffect(() => {
     if (user) {
       const delayDebounce = setTimeout(() => {
@@ -126,7 +133,16 @@ const ToolInventory = () => {
       setLoading(false);
       setTools([]);
     }
-  }, [searchTerm, user]);
+  }, [searchTerm, selectedCategory.id, user]);
+
+  // Fetch categories on mount
+  useEffect(() => {
+    if (user) {
+      axios.get('/api/categories')
+        .then(res => setCategories(res.data))
+        .catch(err => console.error("Failed to fetch categories for filter", err));
+    }
+  }, [user]);
 
   const handleOpenModal = (tool = null) => {
     setEditingTool(tool);
@@ -369,6 +385,49 @@ const ToolInventory = () => {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Category Dropdown Toggle */}
+      <div className="mb-6 relative w-full md:w-64 z-20">
+        <button
+          onClick={() => setIsCategoryMenuOpen(!isCategoryMenuOpen)}
+          className="w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 transition-colors text-gray-700 font-medium"
+        >
+          <div className="flex items-center gap-2">
+            <FiFilter className="h-4 w-4 text-gray-500" />
+            <span className="truncate">{selectedCategory.name}</span>
+          </div>
+          <svg
+            className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isCategoryMenuOpen ? 'rotate-180' : ''}`}
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {isCategoryMenuOpen && (
+          <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="max-h-60 overflow-y-auto py-1">
+              <button
+                onClick={() => { setSelectedCategory({ id: 'ALL', name: 'All Categories' }); setIsCategoryMenuOpen(false); }}
+                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${selectedCategory.id === 'ALL' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+              >
+                All Categories
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat._id}
+                  onClick={() => { setSelectedCategory({ id: cat._id, name: cat.name }); setIsCategoryMenuOpen(false); }}
+                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${selectedCategory.id === cat._id ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                >
+                  <span className="truncate block">{cat.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {error && (

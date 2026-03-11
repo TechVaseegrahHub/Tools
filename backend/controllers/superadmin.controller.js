@@ -128,6 +128,49 @@ export const toggleOrgStatus = async (req, res) => {
     }
 };
 
+// @desc    Upgrade an organization to free Premium manually
+// @route   PUT /api/superadmin/orgs/:orgId/free-upgrade
+// @access  SuperAdmin only
+export const upgradeOrgToFreePremium = async (req, res) => {
+    try {
+        const { duration } = req.body;
+        const orgId = req.params.orgId;
+
+        if (!['1_month', '1_year', 'lifetime'].includes(duration)) {
+            return res.status(400).json({ message: 'Invalid duration specified' });
+        }
+
+        const org = await Organization.findById(orgId);
+        if (!org) {
+            return res.status(404).json({ message: 'Organization not found' });
+        }
+
+        let periodEnd = new Date();
+        if (duration === '1_month') {
+            periodEnd.setMonth(periodEnd.getMonth() + 1);
+        } else if (duration === '1_year') {
+            periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+        } else if (duration === 'lifetime') {
+            periodEnd.setFullYear(periodEnd.getFullYear() + 100); // effectively lifetime
+        }
+
+        org.subscriptionPlan = 'free_premium';
+        org.subscriptionStatus = 'active';
+        org.currentPeriodEnd = periodEnd;
+        org.razorpaySubscriptionId = 'free_upgrade_manual';
+
+        await org.save();
+
+        res.json({
+            message: `Organization successfully upgraded to Premium for ${duration.replace('_', ' ')}`,
+            org
+        });
+    } catch (error) {
+        console.error('Error in upgradeOrgToFreePremium:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 // @desc    Edit organization details
 // @route   PUT /api/superadmin/orgs/:orgId
 // @access  SuperAdmin only

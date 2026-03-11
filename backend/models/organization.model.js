@@ -19,7 +19,7 @@ const organizationSchema = new mongoose.Schema({
     },
     subscriptionPlan: {
         type: String,
-        enum: ['free', 'premium'],
+        enum: ['free', 'premium', 'free_premium'],
         default: 'free'
     },
     razorpaySubscriptionId: {

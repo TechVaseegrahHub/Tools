@@ -7,12 +7,14 @@
 @layer base {
   html {
     @apply scroll-smooth;
+    touch-action: manipulation;
   }
 
   body {
     @apply font-sans bg-gray-50 text-gray-900;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    touch-action: manipulation;
   }
 
   h1,
@@ -28,6 +30,7 @@
   textarea,
   select {
     @apply focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+    font-size: 16px !important;
   }
 
   button {
