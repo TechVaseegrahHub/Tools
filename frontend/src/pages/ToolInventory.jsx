@@ -239,87 +239,85 @@ const ToolInventory = () => {
     }
   };
 
-  // Tool Card Component - Amazon Style
+  // Tool Card Component
   const ToolCard = ({ tool }) => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300 hover:-translate-y-1 flex flex-col">
       {/* Image Section */}
       <div className="relative">
         {tool.image ? (
-          <img
-            src={tool.image}
-            alt={tool.toolName}
-            className="w-full h-48 object-cover"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = 'https://placehold.co/400x300?text=No+Image';
-            }}
-          />
+          <div className="w-full h-32 sm:h-44 bg-gray-50 flex items-center justify-center overflow-hidden">
+            <img
+              src={tool.image}
+              alt={tool.toolName}
+              className="w-full h-full object-contain p-2"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://placehold.co/400x300?text=No+Image';
+              }}
+            />
+          </div>
         ) : (
-          <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-            <FiTool className="h-12 w-12 text-gray-400" />
+          <div className="w-full h-32 sm:h-44 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+            <FiTool className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400" />
           </div>
         )}
 
         {/* Favorite Button */}
         <button
           onClick={() => toggleFavorite(tool._id)}
-          className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all duration-200 ${favorites.has(tool._id)
+          className={`absolute top-2 right-2 p-1.5 sm:p-2 rounded-full backdrop-blur-sm transition-all duration-200 ${favorites.has(tool._id)
             ? 'bg-red-500 text-white hover:bg-red-600'
             : 'bg-white/80 text-gray-600 hover:bg-white hover:text-red-500'
             }`}
         >
-          <FiHeart className={`h-4 w-4 ${favorites.has(tool._id) ? 'fill-current' : ''}`} />
+          <FiHeart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${favorites.has(tool._id) ? 'fill-current' : ''}`} />
         </button>
 
         {/* Status Badge */}
-        <div className="absolute bottom-3 left-3">
-          <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor(tool.status)}`}>
+        <div className="absolute bottom-2 left-2">
+          <span className={`px-2 py-0.5 inline-flex text-[10px] sm:text-xs leading-5 font-semibold rounded-full ${statusColor(tool.status)}`}>
             {tool.status}
           </span>
         </div>
       </div>
 
       {/* Content Section */}
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="font-semibold text-gray-900 text-lg line-clamp-1">{tool.toolName}</h3>
-        </div>
+      <div className="p-2.5 sm:p-4 flex flex-col flex-1">
+        <h3 className="font-semibold text-gray-900 text-sm sm:text-base line-clamp-1 mb-1.5">{tool.toolName}</h3>
 
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center text-sm text-gray-600">
-            <span className="font-medium text-gray-900 mr-2">ID:</span>
-            <span className="font-mono bg-gray-100 px-2 py-1 rounded">{tool.toolId}</span>
+        <div className="space-y-1 sm:space-y-2 mb-3 flex-1">
+          <div className="flex items-center text-xs sm:text-sm text-gray-600">
+            <span className="font-medium text-gray-900 mr-1.5">ID:</span>
+            <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-[10px] sm:text-xs truncate">{tool.toolId}</span>
           </div>
-
-          <div className="flex items-center text-sm text-gray-600">
-            <span className="font-medium text-gray-900 mr-2">Category:</span>
-            <span>{tool.category?.name || 'N/A'}</span>
+          <div className="flex items-center text-xs sm:text-sm text-gray-600 truncate">
+            <span className="font-medium text-gray-900 mr-1.5 flex-shrink-0">Cat:</span>
+            <span className="truncate">{tool.category?.name || 'N/A'}</span>
           </div>
-
-          <div className="flex items-center text-sm text-gray-600">
+          <div className="hidden sm:flex items-center text-sm text-gray-600">
             <span className="font-medium text-gray-900 mr-2">Location:</span>
             <span>{tool.location || 'N/A'}</span>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 sm:gap-2">
           <button
             onClick={() => handleOpenModal(tool)}
-            className="flex-1 py-2 px-3 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center gap-1"
-            title={canManage ? "Edit Tool" : "View Details"}
+            className="flex-1 py-1.5 sm:py-2 px-2 sm:px-3 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center gap-1"
+            title={canManage ? 'Edit Tool' : 'View Details'}
           >
-            {canManage ? <FiEdit className="h-4 w-4" /> : <FiSearch className="h-4 w-4" />}
+            {canManage ? <FiEdit className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <FiSearch className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
             {canManage ? 'Edit' : 'View'}
           </button>
 
           {isAdmin && (
             <button
               onClick={() => handleDeleteTool(tool)}
-              className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
+              className="p-1.5 sm:p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
               title="Delete Tool"
             >
-              <FiTrash2 className="h-4 w-4" />
+              <FiTrash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
           )}
         </div>
@@ -439,7 +437,7 @@ const ToolInventory = () => {
       {/* Tools Display */}
       {loading ? (
         viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
             {[...Array(ITEMS_PER_PAGE)].map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : (
@@ -512,7 +510,7 @@ const ToolInventory = () => {
 
           {/* Grid View */}
           {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
               {tools.map((tool) => (
                 <ToolCard key={tool._id} tool={tool} />
               ))}
