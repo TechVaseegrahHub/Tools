@@ -327,61 +327,69 @@ const ToolInventory = () => {
 
   return (
     <div>
-      <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Tool Inventory</h1>
-          <p className="text-gray-600 mt-1">Manage and track all tools in your inventory</p>
-        </div>
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          {/* View Mode Toggle */}
-          <div className="flex rounded-lg border border-gray-300 overflow-hidden">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 ${viewMode === 'grid' ? 'bg-blue-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-              title="Grid View"
-            >
-              <FiGrid className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-2 ${viewMode === 'list' ? 'bg-blue-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-              title="List View"
-            >
-              <FiList className="h-5 w-5" />
-            </button>
+      {/* ── Toolbar ── */}
+      <div className="mb-6">
+        {/* Row 1: Title + controls (always fully visible) */}
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div>
+            <h1 className="text-xl md:text-3xl font-bold text-gray-900">Tool Inventory</h1>
+            <p className="text-gray-600 mt-0.5 text-sm hidden md:block">Manage and track all tools in your inventory</p>
           </div>
 
-          {/* Search Bar */}
-          <div className="relative w-full md:w-64">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FiSearch className="h-5 w-5 text-gray-400" />
+          <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+            {/* Grid / List toggle */}
+            <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 ${viewMode === 'grid' ? 'bg-blue-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                title="Grid View"
+              >
+                <FiGrid className="h-4 w-4 md:h-5 md:w-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 ${viewMode === 'list' ? 'bg-blue-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                title="List View"
+              >
+                <FiList className="h-4 w-4 md:h-5 md:w-5" />
+              </button>
             </div>
-            <input
-              type="text"
-              placeholder="Search tools..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="input-field pl-10"
-            />
-          </div>
 
-          <button
-            onClick={handleRefresh}
-            className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
-            title="Refresh"
-          >
-            <FiRefreshCw className="h-5 w-5" />
-          </button>
-
-          {/* Add New Tool Button */}
-          {canManage && (
+            {/* Refresh */}
             <button
-              onClick={() => handleOpenModal()}
-              className="btn-primary flex items-center"
+              onClick={handleRefresh}
+              className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
+              title="Refresh"
             >
-              <FiPlus className="mr-2" /> Add Tool
+              <FiRefreshCw className="h-4 w-4 md:h-5 md:w-5" />
             </button>
-          )}
+
+            {/* Add Tool */}
+            {canManage && (
+              <button
+                onClick={() => handleOpenModal()}
+                className="btn-primary flex items-center text-sm py-2 px-3"
+              >
+                <FiPlus className="h-4 w-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Add Tool</span>
+                <span className="sm:hidden">Add</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Row 2: Full-width search */}
+        <div className="relative w-full md:w-64">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <FiSearch className="h-4 w-4 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search tools..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="input-field pl-10"
+          />
         </div>
       </div>
 
