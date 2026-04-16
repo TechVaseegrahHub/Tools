@@ -48,56 +48,65 @@ const Reports = () => {
   }
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Reports</h1>
-        <p className="text-gray-600 mt-1">View detailed reports and analytics</p>
+    <div className="space-y-12 pb-20">
+      <div className="bg-black border-l-[16px] border-accent rounded-xl p-10 text-white relative overflow-hidden group">
+        <div className="grid-bg opacity-[0.1]" />
+        <div className="relative z-10">
+          <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter italic mb-4">System Reports</h1>
+          <p className="text-white/40 text-[12px] font-black uppercase tracking-[0.4em] italic mb-2">// View data about your tools and inventory //</p>
+        </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        <div className="card p-6">
-          <div className="flex items-center justify-between">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-6">
+        <div className="bg-white border-2 border-black p-8 shadow-brutal relative overflow-hidden group">
+          <div className="grid-bg opacity-[0.05]" />
+          <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Tools</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{reportData.totalTools}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 italic mb-2">Tools</p>
+              <p className="text-5xl font-black text-black tracking-tighter italic">{reportData.totalTools}</p>
             </div>
-            <div className="p-3 rounded-full bg-primary-50 text-primary-600">
-              <FiTool className="h-6 w-6" />
+            <div className="p-4 bg-black text-white border-2 border-black rotate-12 group-hover:rotate-0 transition-transform">
+              <FiTool className="h-8 w-8" strokeWidth={4} />
             </div>
           </div>
         </div>
 
-        <div className="card p-6">
-          <div className="flex items-center justify-between">
+        <div className="bg-white border-2 border-black p-8 shadow-brutal relative overflow-hidden group">
+          <div className="grid-bg opacity-[0.05]" />
+          <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className="text-sm font-medium text-gray-500">Available Tools</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{reportData.availableTools}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-accent italic mb-2">Available</p>
+              <p className="text-5xl font-black text-black tracking-tighter italic">{reportData.availableTools}</p>
             </div>
-            <div className="p-3 rounded-full bg-green-50 text-green-600">
-              <FiBarChart className="h-6 w-6" />
+            <div className="p-4 bg-accent text-white border-2 border-black -rotate-12 group-hover:rotate-0 transition-transform shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <FiBarChart className="h-8 w-8" strokeWidth={4} />
             </div>
           </div>
         </div>
 
-        <div className="card p-6">
-          <div className="flex items-center justify-between">
+        <div className="bg-white border-2 border-black p-8 shadow-brutal relative overflow-hidden group border-r-8">
+          <div className="grid-bg opacity-[0.05]" />
+          <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className="text-sm font-medium text-gray-500">Active Users</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{reportData.totalUsers}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 italic mb-2">Users</p>
+              <p className="text-5xl font-black text-black tracking-tighter italic">{reportData.totalUsers}</p>
             </div>
-            <div className="p-3 rounded-full bg-secondary-50 text-secondary-600">
-              <FiUser className="h-6 w-6" />
+            <div className="p-4 bg-black text-accent border-2 border-black group-hover:scale-110 transition-transform">
+              <FiUser className="h-8 w-8" strokeWidth={4} />
             </div>
           </div>
         </div>
       </div>
 
       {/* Recent Activity */}
-      <div className="card p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Recent Activity</h2>
-          <FiCalendar className="h-5 w-5 text-primary-500" />
+      <div className="bg-white border-4 border-black p-10 shadow-brutal relative overflow-hidden group">
+        <div className="grid-bg opacity-[0.05]" />
+        <div className="flex items-center justify-between mb-8 border-b-4 border-black pb-8">
+          <h2 className="text-3xl font-black uppercase tracking-tighter italic">Recent Activity</h2>
+          <div className="p-3 bg-accent text-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <FiCalendar className="h-6 w-6" strokeWidth={4} />
+          </div>
         </div>
         <div className="space-y-4">
           {recentActivity.length === 0 ? (

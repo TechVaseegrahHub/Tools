@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 
 const UpgradeModal = ({ isOpen, onClose, onSuccess }) => {
     const [loading, setLoading] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState('Basic'); // 'Basic' or 'Pro'
 
     if (!isOpen) return null;
 
@@ -12,13 +13,25 @@ const UpgradeModal = ({ isOpen, onClose, onSuccess }) => {
         setLoading(true);
         try {
             // 1. Ask backend to create a Razorpay subscription
-            const { data } = await axios.post('/api/payment/create-subscription');
+            const { data } = await axios.post('/api/payment/create-subscription', { plan: selectedPlan });
+
+            if (data.isMock) {
+                // Instantly simulate successful payment since we are mocking
+                await axios.post('/api/payment/verify', {
+                    isMock: true,
+                    razorpay_subscription_id: data.subscriptionId,
+                    plan: selectedPlan
+                });
+                toast.success(`Successfully upgraded to ${selectedPlan} Plan (Dev Mode)!`);
+                onSuccess();
+                return;
+            }
 
             const options = {
                 key: data.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID,
                 subscription_id: data.subscriptionId,
                 name: 'ToolRoom Premium',
-                description: 'Unlimited Tools Subscription',
+                description: `${selectedPlan} Plan Subscription`,
                 image: '/vite.svg',
                 handler: async function (response) {
                     try {
@@ -27,9 +40,10 @@ const UpgradeModal = ({ isOpen, onClose, onSuccess }) => {
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_subscription_id: response.razorpay_subscription_id,
                             razorpay_signature: response.razorpay_signature,
+                            plan: selectedPlan
                         });
 
-                        toast.success('Successfully upgraded to Premium!');
+                        toast.success(`Successfully upgraded to ${selectedPlan} Plan!`);
                         onSuccess(); // Callback to refresh UI/tools state
                     } catch (err) {
                         console.error('Payment verification failed:', err);
@@ -63,69 +77,131 @@ const UpgradeModal = ({ isOpen, onClose, onSuccess }) => {
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-60 p-4">
-            <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all">
-                {/* Header Graphic */}
-                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 text-center">
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 text-white/80 hover:text-white bg-black/10 hover:bg-black/20 p-2 rounded-full transition-colors"
-                    >
-                        <FiX className="h-5 w-5" />
-                    </button>
-                    <div className="mx-auto bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                        <FiShield className="h-8 w-8 text-white" />
+            <div className="relative w-full max-w-5xl bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all flex flex-col md:flex-row">
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-800 bg-white/80 backdrop-blur-sm p-2 rounded-full transition-colors shadow-sm"
+                >
+                    <FiX className="h-5 w-5" />
+                </button>
+                
+                {/* Free Plan Column */}
+                <div 
+                    className={`flex-1 p-8 cursor-pointer transition-all duration-300 ${selectedPlan === 'Free' ? 'bg-gray-50 border-2 border-gray-400' : 'hover:bg-gray-50 border border-transparent border-r-gray-200'}`}
+                    onClick={() => setSelectedPlan('Free')}
+                >
+                    <div className="mb-4">
+                        <span className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-gray-700 bg-gray-200 rounded-full">Free Plan</span>
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-1">Tool Limit Reached</h2>
-                    <p className="text-blue-100 text-sm">You have reached the free tier limit of 10 tools.</p>
+                    <div className="text-4xl font-extrabold text-gray-900 mb-2">
+                        ₹0<span className="text-sm text-gray-500 font-medium">/month</span>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-6 h-10">Start with the basics. Perfect for testing.</p>
+                    
+                    <div className="space-y-4 mb-8">
+                        <div className="flex items-center text-gray-700 text-sm">
+                            <FiCheck className="h-4 w-4 text-gray-500 mr-3 flex-shrink-0" />
+                            <span>List up to <strong>5 tools</strong></span>
+                        </div>
+                        <div className="flex items-center text-gray-700 text-sm">
+                            <FiCheck className="h-4 w-4 text-gray-500 mr-3 flex-shrink-0" />
+                            <span>Normal visibility</span>
+                        </div>
+                        <div className="flex items-center text-gray-700 text-sm">
+                            <FiCheck className="h-4 w-4 text-gray-500 mr-3 flex-shrink-0" />
+                            <span>Basic analytics</span>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Content */}
-                <div className="p-6">
-                    <div className="text-center mb-6">
-                        <div className="text-4xl font-extrabold text-gray-900 mb-2">
-                            ₹99<span className="text-lg text-gray-500 font-medium">/month</span>
-                        </div>
-                        <p className="text-gray-600">Upgrade to Premium to unlock unlimited tools and grow your inventory without restrictions.</p>
+                {/* Basic Plan Column */}
+                <div 
+                    className={`flex-1 p-8 cursor-pointer transition-all duration-300 ${selectedPlan === 'Basic' ? 'bg-blue-50 border-2 border-blue-500' : 'hover:bg-gray-50 border border-transparent border-r-gray-200'}`}
+                    onClick={() => setSelectedPlan('Basic')}
+                >
+                    <div className="mb-4">
+                        <span className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-600 bg-blue-100 rounded-full">Basic Plan</span>
                     </div>
-
-                    <div className="space-y-3 mb-8">
-                        <div className="flex items-center text-gray-700">
-                            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mr-3">
-                                <FiCheck className="h-3 w-3 text-green-600" />
-                            </div>
-                            <span>Unlimited tool creation</span>
+                    <div className="text-4xl font-extrabold text-gray-900 mb-2">
+                        ₹49<span className="text-sm text-gray-500 font-medium">/month</span>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-6 h-10">Best for small businesses getting started.</p>
+                    
+                    <div className="space-y-4 mb-8">
+                        <div className="flex items-center text-gray-700 text-sm">
+                            <FiCheck className="h-4 w-4 text-green-500 mr-3 flex-shrink-0" />
+                            <span>List up to <strong>25 tools</strong></span>
                         </div>
-                        <div className="flex items-center text-gray-700">
-                            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mr-3">
-                                <FiCheck className="h-3 w-3 text-green-600" />
-                            </div>
+                        <div className="flex items-center text-gray-700 text-sm">
+                            <FiCheck className="h-4 w-4 text-green-500 mr-3 flex-shrink-0" />
+                            <span>Priority listing in search</span>
+                        </div>
+                        <div className="flex items-center text-gray-700 text-sm">
+                            <FiCheck className="h-4 w-4 text-green-500 mr-3 flex-shrink-0" />
+                            <span>Basic analytics (views)</span>
+                        </div>
+                        <div className="flex items-center text-gray-700 text-sm">
+                            <FiCheck className="h-4 w-4 text-green-500 mr-3 flex-shrink-0" />
                             <span>Priority support</span>
                         </div>
-                        <div className="flex items-center text-gray-700">
-                            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mr-3">
-                                <FiCheck className="h-3 w-3 text-green-600" />
-                            </div>
-                            <span>Cancel anytime</span>
+                    </div>
+                </div>
+
+                {/* Pro Plan Column */}
+                <div 
+                    className={`flex-1 p-8 cursor-pointer transition-all duration-300 ${selectedPlan === 'Pro' ? 'bg-indigo-50 border-2 border-indigo-500' : 'hover:bg-gray-50 border border-transparent'}`}
+                    onClick={() => setSelectedPlan('Pro')}
+                >
+                    <div className="mb-4 flex items-center justify-between">
+                        <span className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-indigo-700 bg-indigo-100 rounded-full">Pro Plan</span>
+                        <span className="hidden lg:inline-block px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-white bg-indigo-600 rounded">Recommended</span>
+                    </div>
+                    <div className="text-4xl font-extrabold text-gray-900 mb-2">
+                        ₹99<span className="text-sm text-gray-500 font-medium">/month</span>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-6 h-10">Ultimate power for scaling rental operations.</p>
+                    
+                    <div className="space-y-4 mb-8">
+                        <div className="flex items-center text-gray-700 text-sm">
+                            <FiCheck className="h-4 w-4 text-indigo-500 mr-3 flex-shrink-0" />
+                            <span><strong>Unlimited</strong> tool listings</span>
+                        </div>
+                        <div className="flex items-center text-gray-700 text-sm">
+                            <FiCheck className="h-4 w-4 text-indigo-500 mr-3 flex-shrink-0" />
+                            <span>Highlighted & High Ranking</span>
+                        </div>
+                        <div className="flex items-center text-gray-700 text-sm">
+                            <FiCheck className="h-4 w-4 text-indigo-500 mr-3 flex-shrink-0" />
+                            <span>Full analytics & Data exports</span>
+                        </div>
+                        <div className="flex items-center text-gray-700 text-sm">
+                            <FiCheck className="h-4 w-4 text-indigo-500 mr-3 flex-shrink-0" />
+                            <span>Dedicated account manager</span>
                         </div>
                     </div>
+                </div>
 
+                {/* Action Footer */}
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100 flex items-center justify-between">
+                    <p className="text-xs text-gray-500 flex items-center">
+                        <FiShield className="mr-1 inline" /> {selectedPlan === 'Free' ? 'Manage via Dashboard Settings' : 'Secure checkout via Razorpay'}
+                    </p>
                     <button
-                        onClick={handleUpgrade}
+                        onClick={selectedPlan === 'Free' ? onClose : handleUpgrade}
                         disabled={loading}
-                        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center"
+                        className={`py-3 px-8 text-white font-semibold rounded-xl shadow-md transition-all flex items-center justify-center min-w-[200px] ${selectedPlan === 'Pro' ? 'bg-indigo-600 hover:bg-indigo-700' : selectedPlan === 'Free' ? 'bg-gray-800 hover:bg-black' : 'bg-blue-600 hover:bg-blue-700'}`}
                     >
                         {loading ? (
-                            <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                        ) : 'Upgrade Now'}
+                        ) : selectedPlan === 'Free' ? 'Close Modal' : `Upgrade to ${selectedPlan}`}
                     </button>
-
-                    <p className="text-center text-xs text-gray-400 mt-4 flex items-center justify-center">
-                        <FiShield className="mr-1" /> Secure checkout via Razorpay
-                    </p>
                 </div>
+                
+                {/* Spacer for absolute footer */}
+                <div className="h-24 w-full md:hidden"></div>
             </div>
         </div>
     );

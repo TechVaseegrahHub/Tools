@@ -4,10 +4,19 @@ dotenv.config();
 import Organization from '../models/organization.model.js';
 import User from '../models/user.model.js';
 
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+let razorpay;
+try {
+    if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+        razorpay = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET,
+        });
+    } else {
+        console.warn('RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET missing in .env. Razorpay features in org controller may fail.');
+    }
+} catch (error) {
+    console.error('Failed to initialize Razorpay in org controller:', error.message);
+}
 
 // @desc    Get this org's settings (includes subscription info)
 // @route   GET /api/org/settings
@@ -24,6 +33,8 @@ export const getOrgSettings = async (req, res) => {
             createdAt: org.createdAt,
             subscriptionPlan: org.subscriptionPlan,
             subscriptionStatus: org.subscriptionStatus,
+            startDate: org.startDate,
+            endDate: org.endDate,
             currentPeriodEnd: org.currentPeriodEnd,
             razorpaySubscriptionId: org.razorpaySubscriptionId,
         });
@@ -67,18 +78,20 @@ export const cancelSubscription = async (req, res) => {
         const org = await Organization.findById(req.user.orgId);
         if (!org) return res.status(404).json({ message: 'Organization not found' });
 
-        if (org.subscriptionPlan !== 'premium' || !org.razorpaySubscriptionId) {
+        if (!['Basic', 'Pro', 'premium', 'free_premium'].includes(org.subscriptionPlan)) {
             return res.status(400).json({ message: 'No active premium subscription to cancel' });
         }
 
         // Cancel at cycle end so the user keeps access until the period ends
-        try {
-            await razorpay.subscriptions.cancel(org.razorpaySubscriptionId, { cancel_at_cycle_end: 1 });
-        } catch (rzpErr) {
-            console.warn('Razorpay cancel failed (may already be cancelled):', rzpErr.message);
+        if (org.razorpaySubscriptionId && !org.razorpaySubscriptionId.startsWith('sub_mock_')) {
+            try {
+                await razorpay.subscriptions.cancel(org.razorpaySubscriptionId, { cancel_at_cycle_end: 1 });
+            } catch (rzpErr) {
+                console.warn('Razorpay cancel failed (may already be cancelled):', rzpErr.message);
+            }
         }
 
-        org.subscriptionPlan = 'free';
+        org.subscriptionPlan = 'Free';
         org.subscriptionStatus = 'cancelled';
         await org.save();
 

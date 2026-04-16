@@ -19,18 +19,28 @@ const organizationSchema = new mongoose.Schema({
     },
     subscriptionPlan: {
         type: String,
-        enum: ['free', 'premium', 'free_premium'],
-        default: 'free'
+        enum: ['Free', 'Basic', 'Pro'],
+        default: 'Free'
     },
+    subscriptionStatus: {
+        type: String,
+        enum: ['active', 'expired', 'cancelled', 'pending', 'created'],
+        default: 'active'
+    },
+    startDate: {
+        type: Date,
+        default: null
+    },
+    endDate: {
+        type: Date,
+        default: null
+    },
+    // For backward compatibility and specialized tracking
     razorpaySubscriptionId: {
         type: String,
         default: null
     },
-    subscriptionStatus: {
-        type: String,
-        default: 'active'
-    },
-    currentPeriodEnd: {
+    currentPeriodEnd: { // Mapping this to endDate logic in controllers
         type: Date,
         default: null
     },

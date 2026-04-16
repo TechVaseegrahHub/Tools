@@ -28,9 +28,39 @@ const toolSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
-  image: {
-    type: String, // URL to the image
+  description: {
+    type: String,
     trim: true,
+    default: '',
+  },
+  price_per_hour: {
+    type: Number,
+    default: 0,
+  },
+  isRentable: {
+    type: Boolean,
+    default: false,
+  },
+  image: {
+    type: String,
+    default: '',
+  },
+  isAvailable: {
+    type: Boolean,
+    default: true,
+  },
+  rentedAt: {
+    type: Date,
+    default: null,
+  },
+  returnedAt: {
+    type: Date,
+    default: null,
+  },
+  ownerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
   },
   orgId: {
     type: mongoose.Schema.Types.ObjectId,

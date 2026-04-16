@@ -177,7 +177,7 @@ const LoginPage = () => {
           >
             <span className="w-2 h-2 rounded-full bg-[#ff0000] animate-pulse" />
             <span className="text-[#ff0000] font-mono text-[10px] uppercase tracking-[0.3em] font-black">
-              AUTH_LAYER / V2.0
+              SECURE LOGIN
             </span>
           </motion.div>
 
@@ -208,15 +208,14 @@ const LoginPage = () => {
             transition={{ duration: 0.7, delay: 0.4 }}
             className="text-white/40 font-mono text-xs uppercase tracking-[0.25em] leading-relaxed max-w-xs border-l-2 border-white/10 pl-4"
           >
-            SYSTEMATIC TOOL INVENTORY MANAGEMENT.
-            TRACK CHECK-INS, CHECK-OUTS, AND WORKFLOWS WITH RAW PRECISION.
+            Manage your tool inventory with ease. Track check-ins, check-outs, and history in one place.
           </motion.p>
 
           {/* Animated stat blocks */}
           <div className="mt-16 grid grid-cols-2 gap-4 max-w-xs">
             {[
-              { label: '/AVAILABLE', value: '124', bg: 'border-white/10 text-white' },
-              { label: '/IN_USE', value: '48', bg: 'bg-[#ff0000] border-[#ff0000] text-white' },
+              { label: 'Available', value: '124', bg: 'border-white/10 text-white' },
+              { label: 'In Use', value: '48', bg: 'bg-[#ff0000] border-[#ff0000] text-white' },
             ].map((s, i) => (
               <motion.div
                 key={i}
@@ -256,7 +255,7 @@ const LoginPage = () => {
           <div className="mb-10">
             <div className="inline-flex items-center gap-2 bg-black text-white px-3 py-1 font-mono text-[9px] uppercase tracking-widest mb-4">
               <span className="w-1.5 h-1.5 bg-[#ff0000] rounded-full animate-pulse" />
-              SECURE_AUTH
+              Sign In
             </div>
             <h2
               className="text-4xl font-black uppercase text-black tracking-tighter leading-tight"
@@ -274,7 +273,7 @@ const LoginPage = () => {
             {/* Email */}
             <div>
               <label className="block text-[9px] font-black uppercase tracking-[0.25em] text-gray-400 mb-2">
-                Authorized Email
+                Email Address
               </label>
               <div className="relative group">
                 <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#ff0000] transition-colors" size={16} />
@@ -293,13 +292,13 @@ const LoginPage = () => {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="text-[9px] font-black uppercase tracking-[0.25em] text-gray-400">
-                  Secure Password
+                  Password
                 </label>
                 <Link
                   to="/forgot-password"
                   className="text-[9px] font-mono uppercase tracking-widest text-gray-400 hover:text-[#ff0000] transition-colors"
                 >
-                  Recover Keys →
+                  Recover Password →
                 </Link>
               </div>
               <div className="relative group">
@@ -333,7 +332,7 @@ const LoginPage = () => {
               {loading ? (
                 <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <>INITIALIZE ACCESS <FiArrowRight size={16} /></>
+                <>Login <FiArrowRight size={16} /></>
               )}
             </motion.button>
           </form>
@@ -359,13 +358,13 @@ const LoginPage = () => {
           {/* Divider + Register link */}
           <div className="mt-8 pt-8 border-t-2 border-black text-center">
             <p className="text-[9px] font-mono uppercase tracking-[0.25em] text-gray-400 mb-4">
-              New to the workstation?
+              Don't have an account?
             </p>
             <Link
               to="/register-org"
               className="inline-flex items-center gap-2 border-2 border-black px-5 py-2.5 font-black text-xs uppercase tracking-widest bg-white text-black hover:bg-black hover:text-white transition-colors"
             >
-              REGISTER ORGANISATION <FiArrowRight size={14} />
+              CREATE ACCOUNT <FiArrowRight size={14} />
             </Link>
           </div>
 

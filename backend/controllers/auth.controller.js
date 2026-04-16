@@ -1,12 +1,21 @@
 import User from '../models/user.model.js';
 import Organization from '../models/organization.model.js';
+import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { sendOtpEmail } from '../utils/email.js';
 import { OAuth2Client } from 'google-auth-library';
+import connectDB from '../utils/db.js';
 
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+let googleClient;
+try {
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_ID !== 'your_google_client_id_here') {
+    googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  }
+} catch (err) {
+  console.warn('Failed to initialize Google OAuth Client:', err.message);
+}
 
 // Helper function to generate a token
 const generateToken = (payload) => {
@@ -112,6 +121,21 @@ export const registerUser = async (req, res) => {
 // @route   POST /api/auth/login
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] Login API Triggered for: ${email}`);
+
+  // Ensure DB is connected before proceeding
+  try {
+    await connectDB();
+  } catch (err) {
+    console.error(`[${timestamp}] Login Blocked: DB Connection Failed. ${err.message}`);
+    return res.status(503).json({ 
+      success: false,
+      message: 'DATABASE_OFFLINE: Unable to verify credentials.',
+      requirement: 'Please check your MongoDB Atlas IP Whitelist (0.0.0.0/0) and ensure the cluster is active.',
+      error: err.message
+    });
+  }
 
   try {
     // --- Check SuperAdmin credentials from .env first ---
@@ -124,6 +148,7 @@ export const loginUser = async (req, res) => {
       email === superAdminEmail &&
       password === superAdminPassword
     ) {
+      console.log(`[${new Date().toISOString()}] SuperAdmin logged in bypassing DB query.`);
       // SuperAdmin login — no DB lookup needed
       const token = generateToken({
         id: 'superadmin',
@@ -142,6 +167,7 @@ export const loginUser = async (req, res) => {
     }
 
     // --- Normal tenant user login ---
+    console.log(`[${new Date().toISOString()}] Executing DB query for user: ${email}`);
     const user = await User.findOne({ email }).populate('orgId', 'name slug isActive');
 
     if (user && (await user.comparePassword(password))) {
@@ -156,7 +182,7 @@ export const loginUser = async (req, res) => {
         role: user.role,
       });
 
-      res.json({
+      const responseData = {
         _id: user._id,
         name: user.name,
         email: user.email,
@@ -164,7 +190,10 @@ export const loginUser = async (req, res) => {
         orgId: user.orgId?._id,
         org: user.orgId ? { name: user.orgId.name, slug: user.orgId.slug } : null,
         token,
-      });
+      };
+      
+      console.log('Login Success Response:', JSON.stringify(responseData, null, 2));
+      res.json(responseData);
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
     }

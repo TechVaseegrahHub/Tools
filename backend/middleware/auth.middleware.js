@@ -2,6 +2,11 @@ import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
 
 const protect = async (req, res, next) => {
+  try {
+    import('fs').then(fs => {
+        fs.appendFileSync('auth_trace.log', `[${new Date().toISOString()}] PROTECT - method: ${req.method}, url: ${req.url}\n`);
+    });
+  } catch(e) {}
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -31,6 +36,7 @@ const protect = async (req, res, next) => {
       }
 
       req.user = {
+        _id: user._id,
         id: user._id,
         orgId: user.orgId,
         role: user.role,

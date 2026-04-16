@@ -200,7 +200,22 @@ const ToolInventory = () => {
     }
   };
 
-  const handleRefresh = () => {
+  const handleReturnTool = async (tool) => {
+    try {
+      const { data } = await axios.patch(`/api/tools/return/${tool._id}`);
+      if (data.success) {
+        // Update tool in state
+        setTools(tools.map(t => t._id === tool._id ? data.data : t));
+        toast.success(`Tool "${tool.toolName}" returned successfully!`);
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to return tool';
+      toast.error(errorMessage);
+      console.error("Return Error:", err);
+    }
+  };
+
+   const handleRefresh = () => {
     fetchTools(currentPage);
     toast.info('Tools refreshed');
   };
@@ -208,15 +223,15 @@ const ToolInventory = () => {
   const statusColor = (status) => {
     switch (status) {
       case 'Available':
-        return 'bg-green-100 text-green-800';
+        return 'bg-black text-white border-black';
       case 'Checked Out':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-gray-100 text-black border-gray-200';
       case 'Under Maintenance':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-50 text-blue-600 border-blue-200';
       case 'Retired':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-50 text-gray-400 border-gray-100';
       case 'Overdue':
-        return 'bg-red-100 text-red-800';
+        return 'bg-accent text-white border-accent';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -241,15 +256,24 @@ const ToolInventory = () => {
 
   // Tool Card Component
   const ToolCard = ({ tool }) => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300 hover:-translate-y-1 flex flex-col">
+    <div className="bg-white border-2 border-black shadow-brutal hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all overflow-hidden flex flex-col group relative">
+      <div className="grid-bg opacity-[0.05]" />
+      
+      {/* Price Badge */}
+      {tool.isRentable && (
+        <div className="absolute top-0 right-0 z-10 bg-accent text-white px-3 py-1 font-black italic border-b-2 border-l-2 border-black text-[10px]">
+          ₹{tool.price_per_hour}/hr
+        </div>
+      )}
+
       {/* Image Section */}
-      <div className="relative">
+      <div className="relative border-b-2 border-black">
         {tool.image ? (
           <div className="w-full h-32 sm:h-44 bg-gray-50 flex items-center justify-center overflow-hidden">
             <img
               src={tool.image}
               alt={tool.toolName}
-              className="w-full h-full object-contain p-2"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               onError={(e) => {
                 e.target.onerror = null;
                 e.target.src = 'https://placehold.co/400x300?text=No+Image';
@@ -257,67 +281,71 @@ const ToolInventory = () => {
             />
           </div>
         ) : (
-          <div className="w-full h-32 sm:h-44 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-            <FiTool className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400" />
+          <div className="w-full h-32 sm:h-44 bg-gray-100 flex items-center justify-center">
+            <FiTool className="h-10 w-10 sm:h-12 sm:w-12 text-black/20" strokeWidth={4} />
           </div>
         )}
 
-        {/* Favorite Button */}
-        <button
-          onClick={() => toggleFavorite(tool._id)}
-          className={`absolute top-2 right-2 p-1.5 sm:p-2 rounded-full backdrop-blur-sm transition-all duration-200 ${favorites.has(tool._id)
-            ? 'bg-red-500 text-white hover:bg-red-600'
-            : 'bg-white/80 text-gray-600 hover:bg-white hover:text-red-500'
-            }`}
-        >
-          <FiHeart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${favorites.has(tool._id) ? 'fill-current' : ''}`} />
-        </button>
-
         {/* Status Badge */}
-        <div className="absolute bottom-2 left-2">
-          <span className={`px-2 py-0.5 inline-flex text-[10px] sm:text-xs leading-5 font-semibold rounded-full ${statusColor(tool.status)}`}>
+        <div className="absolute bottom-2 left-2 flex flex-col gap-1">
+          <span className={`px-3 py-0.5 inline-flex text-[8px] sm:text-[10px] uppercase font-black tracking-widest border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${statusColor(tool.status)}`}>
             {tool.status}
           </span>
+          {tool.isRentable && (
+            <span className="px-3 py-0.5 inline-flex text-[8px] sm:text-[10px] uppercase font-black tracking-widest border-2 border-black bg-accent text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+              Rentable
+            </span>
+          )}
         </div>
       </div>
 
       {/* Content Section */}
-      <div className="p-2.5 sm:p-4 flex flex-col flex-1">
-        <h3 className="font-semibold text-gray-900 text-sm sm:text-base line-clamp-1 mb-1.5">{tool.toolName}</h3>
+      <div className="p-4 flex flex-col flex-1 relative z-10">
+        <h3 className="font-black text-black uppercase tracking-tighter italic text-sm sm:text-base line-clamp-1 mb-2">
+          {tool.toolName}
+        </h3>
 
-        <div className="space-y-1 sm:space-y-2 mb-3 flex-1">
-          <div className="flex items-center text-xs sm:text-sm text-gray-600">
-            <span className="font-medium text-gray-900 mr-1.5">ID:</span>
-            <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-[10px] sm:text-xs truncate">{tool.toolId}</span>
+        <div className="space-y-1.5 mb-4 flex-1">
+          <div className="flex items-center text-[10px] sm:text-xs">
+            <span className="font-black text-black/40 uppercase tracking-widest mr-2">Tool ID:</span>
+            <span className="font-mono bg-black text-white px-2 py-0.5 rounded text-[10px]">{tool.toolId}</span>
           </div>
-          <div className="flex items-center text-xs sm:text-sm text-gray-600 truncate">
-            <span className="font-medium text-gray-900 mr-1.5 flex-shrink-0">Cat:</span>
-            <span className="truncate">{tool.category?.name || 'N/A'}</span>
-          </div>
-          <div className="hidden sm:flex items-center text-sm text-gray-600">
-            <span className="font-medium text-gray-900 mr-2">Location:</span>
-            <span>{tool.location || 'N/A'}</span>
+          <div className="flex items-center text-[10px] sm:text-xs text-black">
+            <span className="font-black text-black/40 uppercase tracking-widest mr-2">Category:</span>
+            <span className="truncate bg-gray-100 px-2 py-0.5 border border-black/10 text-xs">{tool.category?.name || 'General'}</span>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-1.5 sm:gap-2">
-          <button
-            onClick={() => handleOpenModal(tool)}
-            className="flex-1 py-1.5 sm:py-2 px-2 sm:px-3 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center gap-1"
-            title={canManage ? 'Edit Tool' : 'View Details'}
-          >
-            {canManage ? <FiEdit className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <FiSearch className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
-            {canManage ? 'Edit' : 'View'}
-          </button>
-
-          {isAdmin && (
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
             <button
-              onClick={() => handleDeleteTool(tool)}
-              className="p-1.5 sm:p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
-              title="Delete Tool"
+              onClick={() => handleOpenModal(tool)}
+              className="flex-1 py-2 px-3 text-[10px] font-black uppercase tracking-widest border-2 border-black hover:bg-black hover:text-white transition-all flex items-center justify-center gap-2"
             >
-              <FiTrash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              {canManage ? <FiEdit strokeWidth={4} /> : <FiSearch strokeWidth={4} />}
+              {canManage ? 'Edit' : 'View'}
+            </button>
+
+            {isAdmin && (
+              <button
+                onClick={() => handleDeleteTool(tool)}
+                className="p-2 border-2 border-black text-black hover:bg-accent hover:text-white hover:border-accent transition-all"
+                title="Delete Tool"
+              >
+                <FiTrash2 strokeWidth={4} />
+              </button>
+            )}
+          </div>
+
+          {/* New Return Tool Button */}
+          {canManage && (tool.status === 'Checked Out' || tool.status === 'Overdue') && (
+            <button
+              onClick={() => handleReturnTool(tool)}
+              className="w-full py-2 px-3 text-[10px] font-black uppercase tracking-widest border-2 border-black bg-white text-black hover:bg-green-600 hover:text-white hover:border-green-600 transition-all flex items-center justify-center gap-2"
+            >
+              <FiRefreshCw strokeWidth={4} className="animate-pulse" />
+              Return Tool
             </button>
           )}
         </div>
@@ -338,39 +366,39 @@ const ToolInventory = () => {
 
           <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
             {/* Grid / List toggle */}
-            <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+            <div className="flex border-2 border-black overflow-hidden shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 ${viewMode === 'grid' ? 'bg-blue-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-50'}`}
                 title="Grid View"
               >
-                <FiGrid className="h-4 w-4 md:h-5 md:w-5" />
+                <FiGrid className="h-4 w-4 md:h-5 md:w-5" strokeWidth={3} />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 ${viewMode === 'list' ? 'bg-blue-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-50'}`}
                 title="List View"
               >
-                <FiList className="h-4 w-4 md:h-5 md:w-5" />
+                <FiList className="h-4 w-4 md:h-5 md:w-5" strokeWidth={3} />
               </button>
             </div>
 
             {/* Refresh */}
             <button
               onClick={handleRefresh}
-              className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
+              className="p-2.5 bg-white border-2 border-black text-black hover:bg-accent hover:text-white transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
               title="Refresh"
             >
-              <FiRefreshCw className="h-4 w-4 md:h-5 md:w-5" />
+              <FiRefreshCw className="h-4 w-4 md:h-5 md:w-5" strokeWidth={3} />
             </button>
 
             {/* Add Tool */}
             {canManage && (
               <button
                 onClick={() => handleOpenModal()}
-                className="btn-primary flex items-center text-sm py-2 px-3"
+                className="bg-accent text-white px-4 py-2.5 font-black uppercase text-xs tracking-widest border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all flex items-center"
               >
-                <FiPlus className="h-4 w-4 mr-1 md:mr-2" />
+                <FiPlus className="h-4 w-4 mr-2" strokeWidth={4} />
                 <span className="hidden sm:inline">Add Tool</span>
                 <span className="sm:hidden">Add</span>
               </button>

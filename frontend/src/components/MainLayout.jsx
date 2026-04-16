@@ -72,7 +72,7 @@ const MainLayout = () => {
   });
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="app-theme flex h-screen bg-gray-50">
       <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
 
       <div className="flex-1 flex flex-col overflow-hidden">

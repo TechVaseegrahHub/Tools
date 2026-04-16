@@ -34,8 +34,10 @@ const SuperAdminSubscriptionView = () => {
         : '—';
 
     const statusBadge = (plan, status) => {
-        if (plan === 'premium' && status === 'active')
-            return <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">Premium</span>;
+        if (['Pro', 'premium'].includes(plan) && status === 'active')
+            return <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-700">Pro</span>;
+        if (plan === 'Basic' && status === 'active')
+            return <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">Basic</span>;
         if (status === 'cancelled')
             return <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-600">Cancelled</span>;
         return <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-500">Free</span>;
@@ -59,11 +61,11 @@ const SuperAdminSubscriptionView = () => {
                         <p className="text-xs text-gray-400 font-medium">Total Organizations</p>
                     </div>
                 </div>
-                <div className="bg-white rounded-2xl border border-blue-100 shadow-sm p-5 flex items-center gap-4">
-                    <div className="bg-blue-100 p-3 rounded-xl"><FiZap className="h-5 w-5 text-blue-600" /></div>
+                <div className="bg-white rounded-2xl border border-indigo-100 shadow-sm p-5 flex items-center gap-4">
+                    <div className="bg-indigo-100 p-3 rounded-xl"><FiZap className="h-5 w-5 text-indigo-600" /></div>
                     <div>
-                        <p className="text-2xl font-black text-blue-700">{data?.summary?.premium ?? 0}</p>
-                        <p className="text-xs text-blue-400 font-medium">Premium Plans</p>
+                        <p className="text-2xl font-black text-indigo-700">{data?.summary?.premium ?? 0}</p>
+                        <p className="text-xs text-indigo-400 font-medium">Premium Plans (Basic/Pro)</p>
                     </div>
                 </div>
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
@@ -193,16 +195,37 @@ const AdminSubscriptionView = () => {
         }
     };
 
-    const isPremium = (org?.subscriptionPlan === 'premium' || org?.subscriptionPlan === 'free_premium') && org?.subscriptionStatus === 'active';
+    const isPremium = ['Basic', 'Pro', 'premium', 'free_premium'].includes(org?.subscriptionPlan) && org?.subscriptionStatus === 'active';
+    const isPro = ['Pro', 'premium', 'free_premium'].includes(org?.subscriptionPlan) && org?.subscriptionStatus === 'active';
+    const isBasic = org?.subscriptionPlan === 'Basic' && org?.subscriptionStatus === 'active';
     const isFreePremium = org?.subscriptionPlan === 'free_premium' && org?.subscriptionStatus === 'active';
     const isCancelled = org?.subscriptionStatus === 'cancelled';
-    const daysRemaining = org?.currentPeriodEnd
-        ? Math.max(0, Math.ceil((new Date(org.currentPeriodEnd) - new Date()) / (1000 * 60 * 60 * 24)))
+    const daysRemaining = org?.endDate || org?.currentPeriodEnd
+        ? Math.max(0, Math.ceil((new Date(org.endDate || org.currentPeriodEnd) - new Date()) / (1000 * 60 * 60 * 24)))
         : null;
     const cycleLength = daysRemaining !== null ? Math.max(daysRemaining, 28) : 30;
     const formatDate = (d) => d
         ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
         : '—';
+
+    const currentPlanName = isFreePremium ? 'Free Premium' : (org?.subscriptionPlan || 'Free');
+    const getPlanPrice = () => {
+        if (isFreePremium) return '₹0';
+        if (isPro) return '₹99';
+        if (isBasic) return '₹49';
+        return '₹0';
+    };
+    const getToolLimitString = () => {
+        if (isPro) return '∞';
+        if (isBasic) return '25';
+        return '5';
+    };
+    const getMonthlyDesc = () => {
+        if (isFreePremium) return 'Manually granted — unlimited tools';
+        if (isPro) return '₹99 / month — billed monthly';
+        if (isBasic) return '₹49 / month — billed monthly';
+        return 'Free forever — up to 5 tools';
+    };
 
     const statusConfig = {
         active: { label: 'Active', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', icon: FiCheckCircle },
@@ -225,17 +248,17 @@ const AdminSubscriptionView = () => {
         <div className="space-y-6">
 
             {/* ── Plan Banner ── */}
-            <div className={`rounded-2xl border overflow-hidden ${isPremium ? 'border-blue-200 shadow-blue-100 shadow-md' : 'border-gray-200 shadow-sm'}`}>
-                <div className={`px-8 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${isPremium ? 'bg-gradient-to-r from-blue-600 to-indigo-600' : 'bg-gradient-to-r from-gray-600 to-gray-700'}`}>
+            <div className={`rounded-2xl border overflow-hidden ${isPro ? 'border-indigo-200 shadow-indigo-100 shadow-md' : isBasic ? 'border-blue-200 shadow-blue-100 shadow-md' : 'border-gray-200 shadow-sm'}`}>
+                <div className={`px-8 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${isPro ? 'bg-gradient-to-r from-indigo-600 to-purple-600' : isBasic ? 'bg-gradient-to-r from-blue-600 to-indigo-600' : 'bg-gradient-to-r from-gray-600 to-gray-700'}`}>
                     <div className="flex items-center gap-4">
                         <div className="bg-white/20 p-3 rounded-2xl">
                             {isPremium ? <FiZap className="h-7 w-7 text-white" /> : <FiShield className="h-7 w-7 text-white" />}
                         </div>
                         <div>
                             <p className="text-white/60 text-xs font-semibold uppercase tracking-widest">Current Plan</p>
-                            <h2 className="text-white text-2xl font-black">{isFreePremium ? 'Free Premium' : isPremium ? 'Premium' : 'Free'} Plan</h2>
+                            <h2 className="text-white text-2xl font-black">{currentPlanName} Plan</h2>
                             <p className="text-white/70 text-sm mt-0.5">
-                                {isFreePremium ? 'Manually granted — unlimited tools' : isPremium ? '₹99 / month — billed monthly' : 'Free forever — up to 10 tools'}
+                                {getMonthlyDesc()}
                             </p>
                         </div>
                     </div>
@@ -268,17 +291,17 @@ const AdminSubscriptionView = () => {
                     </div>
                     <div className="bg-white border border-indigo-100 rounded-2xl p-5 text-center shadow-sm">
                         <FiCalendar className="h-5 w-5 text-indigo-500 mx-auto mb-2" />
-                        <p className="text-sm font-black text-indigo-700 leading-tight">{formatDate(org?.currentPeriodEnd)}</p>
+                        <p className="text-sm font-black text-indigo-700 leading-tight">{formatDate(org?.endDate || org?.currentPeriodEnd)}</p>
                         <p className="text-xs text-indigo-400 font-semibold mt-1">{isCancelled ? 'Access Ends' : 'Next Renewal'}</p>
                     </div>
                     <div className="bg-white border border-green-100 rounded-2xl p-5 text-center shadow-sm">
                         <FiTrendingUp className="h-5 w-5 text-green-500 mx-auto mb-2" />
-                        <p className="text-3xl font-black text-green-700">{isFreePremium ? '₹0' : '₹99'}</p>
+                        <p className="text-3xl font-black text-green-700">{getPlanPrice()}</p>
                         <p className="text-xs text-green-400 font-semibold mt-1">Monthly Charge</p>
                     </div>
                     <div className="bg-white border border-purple-100 rounded-2xl p-5 text-center shadow-sm">
                         <FiZap className="h-5 w-5 text-purple-500 mx-auto mb-2" />
-                        <p className="text-3xl font-black text-purple-700">∞</p>
+                        <p className="text-3xl font-black text-purple-700">{getToolLimitString()}</p>
                         <p className="text-xs text-purple-400 font-semibold mt-1">Tool Limit</p>
                     </div>
                 </div>
@@ -286,7 +309,7 @@ const AdminSubscriptionView = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <div className="bg-white border border-gray-100 rounded-2xl p-5 text-center shadow-sm">
                         <FiShield className="h-5 w-5 text-gray-400 mx-auto mb-2" />
-                        <p className="text-3xl font-black text-gray-700">10</p>
+                        <p className="text-3xl font-black text-gray-700">5</p>
                         <p className="text-xs text-gray-400 font-semibold mt-1">Tool Limit</p>
                     </div>
                     <div className="bg-white border border-gray-100 rounded-2xl p-5 text-center shadow-sm">
@@ -297,7 +320,7 @@ const AdminSubscriptionView = () => {
                     <div className="bg-white border border-blue-100 rounded-2xl p-5 text-center shadow-sm col-span-2 sm:col-span-1">
                         <FiZap className="h-5 w-5 text-blue-500 mx-auto mb-2" />
                         <p className="text-sm font-black text-blue-700">Upgrade Available</p>
-                        <p className="text-xs text-blue-400 font-semibold mt-1">₹99/month</p>
+                        <p className="text-xs text-blue-400 font-semibold mt-1">Start at ₹49/month</p>
                     </div>
                 </div>
             )}
@@ -314,12 +337,12 @@ const AdminSubscriptionView = () => {
                     </div>
                     <div className="p-6 space-y-1">
                         {[
-                            { label: 'Tool Inventory Limit', free: 'Up to 10 tools', premium: 'Unlimited tools' },
+                            { label: 'Tool Inventory Limit', free: 'Up to 5 tools', premium: getToolLimitString() + (isPro ? ' tools' : ' tools') },
+                            { label: 'Search Visibility', free: 'Normal', premium: isPro ? 'Highlighted + Priority' : 'Priority' },
                             { label: 'User Accounts', free: 'Unlimited', premium: 'Unlimited' },
                             { label: 'Transactions', free: 'Unlimited', premium: 'Unlimited' },
-                            { label: 'Reports & Analytics', free: 'Basic', premium: 'Full access' },
+                            { label: 'Reports & Analytics', free: 'Basic', premium: isPro ? 'Full access & Exports' : 'Basic stats' },
                             { label: 'Priority Support', free: '—', premium: '✓ Included' },
-                            { label: 'Data Exports', free: '—', premium: '✓ Included' },
                         ].map(({ label, free, premium: prem }) => (
                             <div key={label} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
                                 <span className="text-sm text-gray-600 font-medium">{label}</span>
@@ -341,10 +364,10 @@ const AdminSubscriptionView = () => {
                     </div>
                     <div className="p-6 space-y-1">
                         {[
-                            { label: 'Plan', value: isFreePremium ? 'Free Premium' : isPremium ? 'Premium' : 'Free' },
+                            { label: 'Plan', value: currentPlanName },
                             { label: 'Billing Cycle', value: isFreePremium ? '—' : isPremium ? 'Monthly' : '—' },
-                            { label: 'Amount', value: isFreePremium ? '₹0' : isPremium ? '₹99 / month' : '₹0' },
-                            { label: isCancelled ? 'Access Ends' : 'Next Renewal', value: formatDate(org?.currentPeriodEnd) },
+                            { label: 'Amount', value: getPlanPrice() + (isPremium ? ' / month' : '') },
+                            { label: isCancelled ? 'Access Ends' : 'Next Renewal', value: formatDate(org?.endDate || org?.currentPeriodEnd) },
                         ].map(({ label, value }) => (
                             <div key={label} className="flex items-center justify-between py-2.5 border-b border-gray-50">
                                 <span className="text-sm text-gray-500">{label}</span>
@@ -407,10 +430,10 @@ const AdminSubscriptionView = () => {
 
             {/* ── Actions ── */}
             <div className="flex flex-wrap gap-3">
-                {!isPremium && (
+                {(!isPremium || isBasic) && !isPro && (
                     <button onClick={() => setShowUpgrade(true)}
                         className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all">
-                        <FiZap className="h-4 w-4" /> Upgrade to Premium — ₹99/month
+                        <FiZap className="h-4 w-4" /> {isBasic ? 'Upgrade to Pro — ₹99/month' : 'View Premium Plans'}
                     </button>
                 )}
                 {isPremium && !isCancelled && !isFreePremium && (
@@ -436,7 +459,7 @@ const AdminSubscriptionView = () => {
                             </div>
                             <h3 className="text-lg font-bold text-gray-900 mb-2">Cancel Subscription?</h3>
                             <p className="text-sm text-gray-500 mb-6">
-                                You'll retain Premium access until <strong>{formatDate(org?.currentPeriodEnd)}</strong>. After that, your account reverts to the Free plan (10 tool limit).
+                                You'll retain your Premium access until <strong>{formatDate(org?.endDate || org?.currentPeriodEnd)}</strong>. After that, your account reverts to the Free plan (5 tool limit, normal visibility).
                             </p>
                             <div className="flex gap-3">
                                 <button onClick={() => setShowCancelConfirm(false)} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all">

@@ -179,12 +179,17 @@ const Dashboard = () => {
   return (
     <div className="space-y-8">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 text-white">
-        <div className="max-w-4xl">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Tool Room Dashboard</h1>
-          <p className="text-blue-100 text-lg">Welcome back! Here's what's happening today.</p>
-          <div className="flex items-center mt-4 text-sm text-blue-200">
-            <FiCalendar className="mr-2" />
+      <div className="bg-black border-l-[16px] border-accent rounded-xl p-10 text-white relative overflow-hidden group">
+        <div className="grid-bg opacity-[0.1]" />
+        <div className="max-w-4xl relative z-10">
+          <div className="inline-flex items-center gap-2 bg-accent/20 border border-accent/30 text-accent px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-6">
+             <div className="w-2 h-2 bg-accent rounded-full" />
+             Live System Status
+          </div>
+          <h1 className="text-4xl md:text-6xl font-black mb-4 uppercase tracking-tighter italic">Overview</h1>
+          <p className="text-white/60 text-lg uppercase tracking-widest font-bold italic">Keep track of your tools and equipment all in one place.</p>
+          <div className="flex items-center mt-8 text-[11px] font-black uppercase tracking-[0.5em] text-accent">
+            <FiCalendar className="mr-3" />
             <span>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
           </div>
         </div>
@@ -192,16 +197,16 @@ const Dashboard = () => {
 
       {/* Stats Overview */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Overview</h2>
+        <h2 className="text-3xl font-black text-black uppercase tracking-tighter italic mb-8 border-b-4 border-black inline-block">Quick Stats</h2>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {loading ? (
             [...Array(4)].map((_, i) => <StatSkeleton key={i} />)
           ) : (
             <>
-              <StatCard title="Total Tools" value={stats?.totalTools || 0} icon={<FiTool />} color="primary" trend={{ positive: true, value: 12 }} />
-              <StatCard title="Available" value={stats?.toolsAvailable || 0} icon={<FiCheckCircle />} color="green" trend={{ positive: true, value: 8 }} />
-              <StatCard title="Checked Out" value={stats?.toolsCheckedOut || 0} icon={<FiActivity />} color="yellow" trend={{ positive: false, value: 3 }} />
-              <StatCard title="Overdue" value={stats?.toolsOverdue || 0} icon={<FiAlertTriangle />} color="red" trend={{ positive: false, value: 5 }} />
+              <StatCard title="Total Tools" value={stats?.totalTools || 0} icon={<FiTool />} color="secondary" />
+              <StatCard title="Available" value={stats?.toolsAvailable || 0} icon={<FiCheckCircle />} color="green" />
+              <StatCard title="In Use" value={stats?.toolsCheckedOut || 0} icon={<FiActivity />} color="purple" />
+              <StatCard title="Overdue" value={stats?.toolsOverdue || 0} icon={<FiAlertTriangle />} color="red" />
             </>
           )}
         </div>
@@ -209,14 +214,13 @@ const Dashboard = () => {
 
       {/* Tools Grid Section */}
       <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Recent Tools</h2>
+        <div className="flex items-center justify-between mb-8 border-l-8 border-black pl-6">
+          <h2 className="text-2xl font-black text-black uppercase tracking-tighter italic">Recent Tools</h2>
           <button
             onClick={handleViewAllTools}
-            className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center hover:underline"
+            className="btn-primary flex items-center gap-2 group"
           >
-            View All Tools
-            <FiTrendingUp className="ml-1 h-4 w-4" />
+            See All Tools <FiTrendingUp className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
           </button>
         </div>
         {loading ? (
@@ -237,24 +241,25 @@ const Dashboard = () => {
             }).filter(Boolean)}
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <FiTool className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-4 text-lg font-medium text-gray-900">No tools found</h3>
-            <p className="mt-2 text-gray-500">Get started by adding some tools to your inventory.</p>
+          <div className="bg-white rounded-xl border-4 border-black p-12 text-center shadow-brutal">
+            <FiTool className="mx-auto h-12 w-12 text-gray-200" />
+            <h3 className="mt-4 text-lg font-black uppercase italic tracking-widest text-black">No tools found</h3>
+            <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-gray-400">Add some tools to your inventory to see them here.</p>
           </div>
         )}
       </div>
 
       {/* Overdue Tools & Recent Activity */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
         {/* Overdue Tools Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white border-4 border-black p-10 shadow-brutal relative overflow-hidden group">
+          <div className="grid-bg opacity-[0.05]" />
+          <div className="flex items-center justify-between mb-10 border-b-4 border-black pb-8">
             <div className="flex items-center">
-              <div className="p-2 bg-rose-100 rounded-lg">
-                <FiAlertTriangle className="h-5 w-5 text-rose-600" />
+              <div className="p-4 bg-accent text-white border-2 border-black rotate-3 group-hover:rotate-12 transition-transform">
+                <FiAlertTriangle className="h-6 w-6" strokeWidth={4} />
               </div>
-              <h2 className="text-xl font-bold text-gray-900 ml-3">Overdue Tools</h2>
+              <h2 className="text-2xl font-black text-black uppercase tracking-tighter italic ml-6">Overdue List</h2>
             </div>
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-rose-100 text-rose-800">
               {overdue.length} items
@@ -303,16 +308,17 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Activity Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white border-4 border-black p-10 shadow-brutal relative overflow-hidden group">
+          <div className="grid-bg opacity-[0.05]" />
+          <div className="flex items-center justify-between mb-10 border-b-4 border-black pb-8">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FiBarChart2 className="h-5 w-5 text-blue-600" />
+              <div className="p-4 bg-black text-white border-2 border-black group-hover:-rotate-12 transition-transform">
+                <FiBarChart2 className="h-6 w-6" strokeWidth={4} />
               </div>
-              <h2 className="text-xl font-bold text-gray-900 ml-3">Recent Activity</h2>
+              <h2 className="text-2xl font-black text-black uppercase tracking-tighter italic ml-6">Recent Activity</h2>
             </div>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-              {recent.length} events
+            <span className="inline-flex items-center px-4 py-1.5 rounded-none border-2 border-black text-[10px] font-black uppercase tracking-widest bg-accent text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              {recent.length} updates
             </span>
           </div>
 

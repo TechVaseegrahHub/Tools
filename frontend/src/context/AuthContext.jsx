@@ -58,7 +58,10 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async (email, password) => {
     try {
+      console.log('--- Login Debug ---');
+      console.log('API URL:', API_URL + 'login');
       const res = await axios.post(API_URL + 'login', { email, password });
+      console.log('Full API Response:', res);
 
       // Store user and token
       setUser(res.data);

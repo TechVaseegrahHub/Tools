@@ -6,7 +6,7 @@ import Footer from './Footer';
 
 const LandingPage = () => {
     return (
-        <div className="min-h-screen bg-slate-50 font-sans selection:bg-indigo-100 selection:text-indigo-900">
+        <div className="landing-theme min-h-screen bg-slate-50 font-sans selection:bg-indigo-100 selection:text-indigo-900">
             <Hero />
             <Features />
             <Pricing />

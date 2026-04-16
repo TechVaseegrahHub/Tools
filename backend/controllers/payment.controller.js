@@ -5,10 +5,19 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Initialize Razorpay instance
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+let razorpay;
+try {
+    if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+        razorpay = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET,
+        });
+    } else {
+        console.warn('RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET missing in .env. Razorpay features in payment controller may fail.');
+    }
+} catch (error) {
+    console.error('Failed to initialize Razorpay in payment controller:', error.message);
+}
 
 // @desc    Create a Razorpay Subscription
 // @route   POST /api/payment/create-subscription
@@ -21,13 +30,23 @@ export const createSubscription = async (req, res) => {
         const org = await Organization.findById(orgId);
         if (!org) return res.status(404).json({ message: 'Organization not found' });
 
-        if (org.subscriptionPlan === 'premium' && org.subscriptionStatus === 'active') {
+        if (['Basic', 'Pro', 'premium'].includes(org.subscriptionPlan) && org.subscriptionStatus === 'active') {
             return res.status(400).json({ message: 'Organization already has an active premium subscription' });
         }
 
-        const planId = process.env.RAZORPAY_PLAN_ID;
+        const planId = req.body.plan === 'Pro' ? process.env.RAZORPAY_PRO_PLAN_ID : process.env.RAZORPAY_BASIC_PLAN_ID;
+        if (!planId && (!process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID === 'your_key_id_here')) {
+            // MOCK BYPASS FOR DEVELOPMENT
+            console.log('[PAYMENT_MOCK] Bypassing Razorpay for development mode...');
+            return res.status(200).json({
+                subscriptionId: 'sub_mock_' + Math.random().toString(36).substr(2, 9),
+                keyId: 'rzp_test_mock_key',
+                isMock: true
+            });
+        }
+
         if (!planId) {
-            console.error("RAZORPAY_PLAN_ID is not set in environment variables");
+            console.error("Razorpay plan ID is not set for the requested plan");
             return res.status(500).json({ message: 'Payment configuration error' });
         }
 
@@ -42,9 +61,10 @@ export const createSubscription = async (req, res) => {
             return res.status(500).json({ message: 'Failed to create Razorpay subscription' });
         }
 
-        // Temporarily save the subscription ID on the org, but don't mark as premium yet
+        // Temporarily save the subscription ID on the org, but don't mark as active yet
         org.razorpaySubscriptionId = subscription.id;
         org.subscriptionStatus = 'created';
+        // We'll trust the verified plan from verify payload, or we could temporarily store requestedPlan
         await org.save();
 
         res.status(200).json({
@@ -53,7 +73,7 @@ export const createSubscription = async (req, res) => {
         });
     } catch (error) {
         console.error('Error creating subscription:', error);
-        res.status(500).json({ message: 'Server Error', error: error.message });
+        res.status(500).json({ message: 'Server Error during payment initiation', error: error.message });
     }
 };
 
@@ -62,8 +82,26 @@ export const createSubscription = async (req, res) => {
 // @access  Private/Admin/Manager
 export const verifySubscription = async (req, res) => {
     try {
-        const { razorpay_payment_id, razorpay_subscription_id, razorpay_signature } = req.body;
+        const { razorpay_payment_id, razorpay_subscription_id, razorpay_signature, isMock, plan } = req.body;
         const orgId = req.user.orgId;
+
+        // MOCK VERIFICATION
+        if (isMock || (razorpay_subscription_id && razorpay_subscription_id.startsWith('sub_mock_'))) {
+            console.log('[PAYMENT_MOCK] Verifying mock subscription...');
+            const org = await Organization.findById(orgId);
+            if (!org) return res.status(404).json({ message: 'Organization not found' });
+
+            org.subscriptionPlan = plan || 'Pro'; // Default to Pro if not specified in mock
+            org.subscriptionStatus = 'active';
+            const oneMonthFromNow = new Date();
+            oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+            org.startDate = new Date();
+            org.endDate = oneMonthFromNow;
+            org.currentPeriodEnd = oneMonthFromNow;
+            
+            await org.save();
+            return res.status(200).json({ message: `MOCK VERIFIED: Welcome to ${org.subscriptionPlan} (Dev Mode)!` });
+        }
 
         if (!razorpay_payment_id || !razorpay_subscription_id || !razorpay_signature) {
             return res.status(400).json({ message: 'Missing payment details' });
@@ -88,11 +126,13 @@ export const verifySubscription = async (req, res) => {
                 return res.status(400).json({ message: 'Subscription ID mismatch' });
             }
 
-            org.subscriptionPlan = 'premium';
+            org.subscriptionPlan = plan || 'Basic'; // Expected to be passed in frontend request
             org.subscriptionStatus = 'active';
-            // Set an initial currentPeriodEnd (e.g., 1 month from now), webhook will maintain this long term
+            
             const oneMonthFromNow = new Date();
             oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+            org.startDate = new Date();
+            org.endDate = oneMonthFromNow;
             org.currentPeriodEnd = oneMonthFromNow;
 
             // Fetch real payment amount from Razorpay and store in local history
@@ -112,7 +152,7 @@ export const verifySubscription = async (req, res) => {
 
             await org.save();
 
-            res.status(200).json({ message: 'Payment verified successfully. Welcome to Premium!' });
+            res.status(200).json({ message: `Payment verified successfully. Welcome to ${org.subscriptionPlan}!` });
         } else {
             res.status(400).json({ message: 'Invalid payment signature' });
         }
@@ -165,6 +205,7 @@ export const handleWebhook = async (req, res) => {
             if (org) {
                 org.subscriptionStatus = 'active';
                 // Razorpay uses unix timestamps (seconds)
+                org.endDate = new Date(sub.current_end * 1000);
                 org.currentPeriodEnd = new Date(sub.current_end * 1000);
                 await org.save();
             }
@@ -174,7 +215,7 @@ export const handleWebhook = async (req, res) => {
             const org = await Organization.findOne({ razorpaySubscriptionId: subId });
             if (org) {
                 org.subscriptionStatus = sub.status; // e.g., 'halted' or 'cancelled'
-                org.subscriptionPlan = 'free'; // Downgrade to free
+                org.subscriptionPlan = 'Free'; // Downgrade to free
                 await org.save();
             }
         }

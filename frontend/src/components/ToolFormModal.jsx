@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 import { FiX, FiPlus, FiTool, FiTag, FiInfo, FiCalendar, FiMapPin, FiSave, FiImage, FiCamera } from 'react-icons/fi';
 import ImageEditor from './ImageEditor';
 import CameraCapture from './CameraCapture';
@@ -12,7 +13,10 @@ const ToolFormModal = ({ tool, onSave, onClose, userRole, onLimitReached }) => {
     status: 'Available',
     purchaseDate: '',
     location: '',
-    image: ''
+    image: '',
+    description: '',
+    price_per_hour: 0,
+    isRentable: false
   });
   const [categories, setCategories] = useState([]);
   const [showNewCategory, setShowNewCategory] = useState(false);
@@ -39,7 +43,10 @@ const ToolFormModal = ({ tool, onSave, onClose, userRole, onLimitReached }) => {
         status: tool.status,
         purchaseDate: tool.purchaseDate ? tool.purchaseDate.split('T')[0] : '', // Format date for input
         location: tool.location,
-        image: tool.image || ''
+        image: tool.image || '',
+        description: tool.description || '',
+        price_per_hour: tool.price_per_hour || 0,
+        isRentable: tool.isRentable || false
       });
     }
   }, [tool, isEditMode]);
@@ -110,7 +117,7 @@ const ToolFormModal = ({ tool, onSave, onClose, userRole, onLimitReached }) => {
 
     try {
       const { data } = await apiCall;
-      onSave(data); // Pass the new/updated tool back to the parent
+      onSave(data.data); // data.data contains the actual tool object from { success: true, data: tool }
     } catch (err) {
       if (err.response?.data?.code === 'TOOL_LIMIT_REACHED') {
         onClose(); // Close the creation modal
@@ -137,7 +144,7 @@ const ToolFormModal = ({ tool, onSave, onClose, userRole, onLimitReached }) => {
               <FiTool className="h-6 w-6 text-primary-600" />
             </div>
             <h2 className="text-xl font-bold text-gray-900">
-              {isEditMode ? 'Edit Tool' : 'Add New Tool'}
+              {isEditMode ? 'Edit Tool' : 'Add Tool'}
             </h2>
           </div>
           <button
@@ -307,8 +314,60 @@ const ToolFormModal = ({ tool, onSave, onClose, userRole, onLimitReached }) => {
               </div>
             </div>
 
-            {/* Enhanced Image Section */}
-            <div>
+            {/* Marketplace Details */}
+            <div className="bg-gray-50 p-6 border-y-2 border-black space-y-6">
+              <h3 className="text-lg font-black uppercase italic tracking-tighter">Marketplace Settings</h3>
+              
+              <div className="flex items-center gap-6">
+                 <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    name="isRentable"
+                    checked={formData.isRentable}
+                    onChange={(e) => setFormData(prev => ({ ...prev, isRentable: e.target.checked }))}
+                    className="sr-only peer"
+                  />
+                  <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-accent border-2 border-black"></div>
+                  <span className="ml-3 text-sm font-black uppercase tracking-widest text-black">Show inside Marketplace</span>
+                </label>
+              </div>
+
+              {formData.isRentable && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-2">
+                  <div className="md:col-span-1">
+                    <label htmlFor="price_per_hour" className="block text-sm font-black uppercase tracking-widest text-black mb-2 flex items-center">
+                      <FiSave className="mr-2 h-4 w-4" /> Price / Hour (₹)
+                    </label>
+                    <input
+                      type="number"
+                      id="price_per_hour"
+                      name="price_per_hour"
+                      value={formData.price_per_hour}
+                      onChange={handleChange}
+                      className="input-field font-mono"
+                      placeholder="0.00"
+                      min="0"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label htmlFor="description" className="block text-sm font-black uppercase tracking-widest text-black mb-2 flex items-center">
+                      <FiInfo className="mr-2 h-4 w-4" /> Description
+                    </label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={2}
+                      className="input-field"
+                      placeholder="Describe the tool's condition, features, etc."
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <label htmlFor="image" className="block text-sm font-medium text-gray-700 flex items-center">
                   <FiImage className="mr-2 h-4 w-4" /> Tool Image

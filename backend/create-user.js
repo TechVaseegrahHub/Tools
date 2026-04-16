@@ -31,13 +31,11 @@ mongoose.connect(process.env.MONGO_URI)
   } else {
     // Create the user
     console.log('Creating new user...');
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('0000', salt);
     
     const user = new User({
       name: 'Tech Vaseegrah',
       email: 'techvaseegrah@gmail.com',
-      password: hashedPassword,
+      password: '0000',
       role: 'Admin'
     });
     

@@ -59,7 +59,7 @@ export const getSubscriptionStats = async (req, res) => {
                     slug: org.slug,
                     isActive: org.isActive,
                     createdAt: org.createdAt,
-                    subscriptionPlan: org.subscriptionPlan || 'free',
+                    subscriptionPlan: org.subscriptionPlan || 'Free',
                     subscriptionStatus: org.subscriptionStatus || 'active',
                     currentPeriodEnd: org.currentPeriodEnd,
                     razorpaySubscriptionId: org.razorpaySubscriptionId,
@@ -68,8 +68,8 @@ export const getSubscriptionStats = async (req, res) => {
             })
         );
 
-        const premiumCount = orgsWithStats.filter(o => o.subscriptionPlan === 'premium').length;
-        const freeCount = orgsWithStats.filter(o => o.subscriptionPlan !== 'premium').length;
+        const premiumCount = orgsWithStats.filter(o => ['Basic', 'Pro', 'premium', 'free_premium'].includes(o.subscriptionPlan)).length;
+        const freeCount = orgsWithStats.filter(o => !['Basic', 'Pro', 'premium', 'free_premium'].includes(o.subscriptionPlan)).length;
 
         res.json({
             summary: {
@@ -260,11 +260,11 @@ export const getFinanceStats = async (req, res) => {
 
         // ── All premium orgs (with subscription IDs) ────────────────────
         const allPremiumOrgs = await Organization.find({
-            subscriptionPlan: 'premium',
+            subscriptionPlan: { $in: ['Basic', 'Pro', 'premium'] },
             razorpaySubscriptionId: { $ne: null },
         }).select('razorpaySubscriptionId paymentHistory');
 
-        const allFreeOrgs = await Organization.countDocuments({ subscriptionPlan: 'free' });
+        const allFreeOrgs = await Organization.countDocuments({ subscriptionPlan: { $nin: ['Basic', 'Pro', 'premium'] } });
 
         // ── Monthly buckets ──────────────────────────────────────────────
         const months = Array.from({ length: 12 }, (_, i) => ({

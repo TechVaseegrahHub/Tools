@@ -38,10 +38,11 @@ const Sidebar = ({ isOpen, onClose }) => {
       { name: 'Finance', href: '/finance', icon: FiDollarSign },
     ]
     : [
-      { name: 'Dashboard', href: '/dashboard', icon: FiHome },
-      { name: 'Tool Inventory', href: '/tools', icon: FiTool },
-      { name: 'Transactions', href: '/transactions', icon: FiArrowRight },
-      { name: 'Manage Users', href: '/users', icon: FiUsers, role: 'Admin' },
+      { name: 'Overview', href: '/dashboard', icon: FiHome },
+      { name: 'Tools', href: '/tools', icon: FiTool },
+      { name: 'Marketplace', href: '/marketplace', icon: FiGlobe },
+      { name: 'Activity', href: '/transactions', icon: FiArrowRight },
+      { name: 'Users', href: '/users', icon: FiUsers, role: 'Admin' },
       { name: 'Reports', href: '/reports', icon: FiBarChart, roles: ['Admin', 'Manager'] },
       { name: 'Settings', href: '/settings', icon: FiSettings, role: 'Admin' },
       { name: 'Subscription', href: '/subscription', icon: FiZap, role: 'Admin' },
@@ -71,11 +72,11 @@ const Sidebar = ({ isOpen, onClose }) => {
 
         {/* Org Name Badge (only for tenant users) */}
         {!isSuperAdmin && user?.org?.name && (
-          <div className="mx-4 mt-4 px-3 py-2 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-2">
-            <FiGlobe className="h-4 w-4 text-blue-500 flex-shrink-0" />
+          <div className="mx-4 mt-4 px-3 py-2 bg-accent/5 border border-accent/10 rounded-xl flex items-center gap-2">
+            <FiGlobe className="h-4 w-4 text-accent flex-shrink-0" />
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-blue-700 truncate">{user.org.name}</p>
-              <p className="text-xs text-blue-400">Your Organization</p>
+              <p className="text-xs font-semibold text-black truncate">{user.org.name}</p>
+              <p className="text-xs text-black/40 italic" style={{ fontSize: '8px' }}>Organization</p>
             </div>
           </div>
         )}
@@ -104,19 +105,19 @@ const Sidebar = ({ isOpen, onClose }) => {
         </nav>
 
         {/* User Profile and Logout */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-200 bg-gray-50/30">
           <div className="flex items-center space-x-3 mb-4">
-            <div className={`rounded-full p-2 ${isSuperAdmin ? 'bg-purple-100' : 'bg-gray-200'}`}>
+            <div className={`rounded-xl p-2 border-2 border-black ${isSuperAdmin ? 'bg-black text-white' : 'bg-white text-black'}`}>
               {isSuperAdmin
-                ? <FiShield className="h-5 w-5 text-purple-600" />
-                : <FiUser className="h-5 w-5 text-gray-600" />
+                ? <FiShield className="h-5 w-5" />
+                : <FiUser className="h-5 w-5" />
               }
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-sm font-bold text-black uppercase tracking-tighter truncate">
                 {user?.name || 'User'}
               </p>
-              <p className={`text-xs truncate ${isSuperAdmin ? 'text-purple-500 font-semibold' : 'text-gray-500'}`}>
+              <p className={`text-[10px] font-black uppercase tracking-widest truncate ${isSuperAdmin ? 'text-accent' : 'text-black/40'}`}>
                 {user?.role || 'Role'}
               </p>
             </div>
@@ -127,7 +128,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             className="sidebar-link w-full text-red-600 hover:bg-red-50"
           >
             <FiLogOut className="mr-3 h-5 w-5" />
-            Logout
+            Sign Out
           </button>
         </div>
       </div>

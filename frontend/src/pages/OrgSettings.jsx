@@ -181,7 +181,25 @@ const OrgSettings = () => {
         setUpgrading(true);
         try {
             const { data } = await axios.post('/api/payment/create-subscription');
-            const { subscriptionId, keyId } = data;
+            const { subscriptionId, keyId, isMock } = data;
+
+            // Handle mock payment bypass for development
+            if (isMock) {
+                console.log('[PAYMENT_MOCK] Handling mock subscription verification...');
+                await axios.post('/api/payment/verify', {
+                    razorpay_subscription_id: subscriptionId,
+                    isMock: true
+                });
+                toast.success('🎉 Welcome to Premium (Dev Mode)!');
+                setSubPlan('premium');
+                setSubStatus('active');
+                const end = new Date();
+                end.setFullYear(end.getFullYear() + 10);
+                setPeriodEnd(end.toISOString());
+                setSubId(subscriptionId);
+                setUpgrading(false);
+                return;
+            }
 
             const options = {
                 key: keyId,

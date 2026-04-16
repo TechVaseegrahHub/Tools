@@ -13,6 +13,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import OrgSettings from './pages/OrgSettings';
 import SubscriptionPage from './pages/SubscriptionPage';
 import FinancePage from './pages/FinancePage';
+import Marketplace from './pages/Marketplace';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/MainLayout';
 import InstallPrompt from './components/InstallPrompt';
@@ -52,6 +53,11 @@ function App() {
           <Route path="/tools" element={
             <ProtectedRoute roles={['Admin', 'Manager', 'Employee']}>
               <ToolInventory />
+            </ProtectedRoute>
+          } />
+          <Route path="/marketplace" element={
+            <ProtectedRoute roles={['Admin', 'Manager', 'Employee']}>
+              <Marketplace />
             </ProtectedRoute>
           } />
           <Route path="/transactions" element={

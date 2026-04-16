@@ -1,6 +1,6 @@
+import './loadenv.js';
 import express from 'express';
 import mongoose from 'mongoose';
-import * as dotenv from 'dotenv';
 import cors from 'cors';
 import { checkOverdueTools } from './utils/overdueChecker.js';
 
@@ -14,29 +14,74 @@ import transactionRoutes from './routes/transaction.routes.js';
 import superAdminRoutes from './routes/superadmin.routes.js';
 import orgRoutes from './routes/org.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
-// Load environment variables
-dotenv.config();
+// Environment variables loaded via import './loadenv.js'
+
+import connectDB from './utils/db.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors()); // Allows cross-origin requests
-app.use(express.json({ limit: '50mb' })); // Allows parsing of JSON request bodies with 50MB limit for images
-app.use(express.urlencoded({ limit: '50mb', extended: true })); // Support URL-encoded bodies
+app.use(cors()); 
+app.use(express.json({ limit: '50mb' })); 
+app.use(express.urlencoded({ limit: '50mb', extended: true })); 
 
-// --- Database Connection ---
-console.log('Attempting to connect to MongoDB...');
-console.log('MONGO_URI:', process.env.MONGO_URI ? 'Loaded' : 'Not found');
+// Request Logger
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
 
-mongoose.connect(process.env.MONGO_URI, {
-  // Removed deprecated options
-})
-  .then(() => console.log('Successfully connected to MongoDB.'))
-  .catch(err => {
-    console.error('Database connection error:', err);
-    // Don't exit here, let's start the server anyway for testing
-  });
+
+// Global Error Logger to File (Listeners)
+import fs from 'fs';
+process.on('uncaughtException', (err) => {
+  fs.appendFileSync('error.log', `[${new Date().toISOString()}] UNCAUGHT EXCEPTION: ${err.message}\n${err.stack}\n`);
+  console.error('UNCAUGHT EXCEPTION:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  fs.appendFileSync('error.log', `[${new Date().toISOString()}] UNHANDLED REJECTION: ${reason}\n`);
+  console.error('UNHANDLED REJECTION:', reason);
+});
+
+// Start the application
+const startServer = async () => {
+  console.log(`[${new Date().toISOString()}] Initializing System Core...`);
+  try {
+    // Attempt DB connection first
+    await connectDB();
+    
+    app.listen(PORT, () => {
+      console.log(`[${new Date().toISOString()}] 🚀 Server RUNNING on port ${PORT}`);
+      console.log(`[${new Date().toISOString()}] Environment: ${process.env.NODE_ENV || 'development'}`);
+      
+      // List all registered tool routes for verification
+      console.log('\n--- Registered Tool Routes ---');
+      if (toolRoutes && toolRoutes.stack) {
+        toolRoutes.stack.forEach(r => {
+          if (r.route) {
+            const methods = Object.keys(r.route.methods).join(', ').toUpperCase();
+            console.log(`${methods} /api/tools${r.route.path}`);
+          }
+        });
+      } else {
+        console.log('Unable to list routes: toolRoutes.stack is undefined');
+      }
+      console.log('-----------------------------\n');
+    });
+  } catch (err) {
+    console.error(`[${new Date().toISOString()}] ❌ FATAL: Backend failed to start due to database error.`);
+    console.warn(`[${new Date().toISOString()}] System will attempt to run anyway, but database dependent routes will fail.`);
+    
+    // Start server anyway so health checks can report the error to the frontend
+    app.listen(PORT, () => {
+      console.log(`[${new Date().toISOString()}] ⚠️ Server RUNNING (Degraded Mode) on port ${PORT}`);
+    });
+  }
+};
+
+startServer();
 
 // --- API Routes ---
 app.get('/api', (req, res) => {
@@ -57,8 +102,13 @@ app.use('/api/org', orgRoutes);
 app.use('/api/payment', paymentRoutes);
 
 // Health check route
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+app.get('/api/health', (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected';
+  res.json({ 
+    status: 'OK', 
+    database: dbStatus,
+    timestamp: new Date().toISOString() 
+  });
 });
 
 // --- Scheduled Tasks ---
@@ -80,10 +130,16 @@ const scheduleOverdueCheck = () => {
   }, timeUntilMidnight);
 };
 
+
+// Final Error Handler Middleware
+app.use((err, req, res, next) => {
+  try {
+    fs.appendFileSync('error.log', `[${new Date().toISOString()}] ROUTE ERROR: ${err.message}\n${err.stack}\nBody: ${JSON.stringify(req.body)}\n`);
+  } catch (e) {}
+  console.error('ROUTE ERROR:', err);
+  res.status(500).json({ message: 'Internal Server Error', error: err.message });
+});
+
 // Start the scheduled task
 scheduleOverdueCheck();
-
-// --- Start Server ---
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+

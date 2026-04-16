@@ -105,13 +105,13 @@ const Transactions = () => {
         ...transactionToCheckIn,
         checkinDate: response.data.eventTimestamp || new Date().toISOString(),
         status: 'Available',
-        action: 'Checked In',
+        action: 'Returned',
       };
 
       setTransactions(prev => prev.map(t => t._id === transactionToCheckIn._id ? updatedRow : t));
       setFilteredTransactions(prev => prev.map(t => t._id === transactionToCheckIn._id ? updatedRow : t));
 
-      toast.success('Tool checked in successfully!');
+      toast.success('Tool returned successfully!');
       setTransactionToCheckIn(null);
     } catch (error) {
       console.error('Failed to check in tool', error);
@@ -158,13 +158,13 @@ const Transactions = () => {
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'In Use':
-        return 'bg-green-100 text-green-800';
+        return 'bg-black text-white border-black';
       case 'Overdue':
-        return 'bg-red-100 text-red-800';
+        return 'bg-accent text-white border-accent';
       case 'Available':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-gray-100 text-black border-gray-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-50 text-gray-400 border-gray-100';
     }
   };
 
@@ -172,51 +172,56 @@ const Transactions = () => {
   const getActionBadgeClass = (action) => {
     switch (action) {
       case 'Checked Out':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-accent/10 text-accent border-accent/20';
       case 'Checked In':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-black text-white border-black';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
   return (
-    <div>
-      <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Transaction Log</h1>
-          <p className="text-gray-600 mt-1">Track all tool check-ins and check-outs</p>
-        </div>
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="relative w-full md:w-64">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FiSearch className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search transactions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="input-field pl-10"
-            />
+    <div className="space-y-12">
+      <div className="bg-black border-l-[16px] border-accent rounded-xl p-10 text-white relative overflow-hidden group">
+        <div className="grid-bg opacity-[0.1]" />
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-8 relative z-10">
+          <div>
+            <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter italic mb-4">Activity Log</h1>
+            <p className="text-white/40 text-[12px] font-black uppercase tracking-[0.4em] italic mb-2">// History of borrowed and returned tools //</p>
           </div>
+          <div className="flex flex-col sm:flex-row items-center gap-6 w-full lg:w-auto">
+            <div className="relative w-full sm:w-80 group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-accent">
+                <FiSearch className="h-5 w-5" strokeWidth={4} />
+              </div>
+              <input
+                type="text"
+                placeholder="Search activity..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-white/10 border-2 border-white/20 py-4 pl-12 pr-4 text-white placeholder:text-white/20 font-black uppercase text-xs tracking-widest focus:outline-none focus:border-accent focus:bg-white/20 transition-all rounded-lg"
+              />
+            </div>
 
-          <button
-            onClick={handleRefresh}
-            className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
-            title="Refresh"
-          >
-            <FiRefreshCw className="h-5 w-5" />
-          </button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleRefresh}
+                className="p-4 bg-white/5 border-2 border-white/10 text-white hover:bg-white hover:text-black transition-all rounded-lg"
+                title="Refresh"
+              >
+                <FiRefreshCw className="h-6 w-6" strokeWidth={4} />
+              </button>
 
-          {canManage && (
-            <button
-              onClick={handleOpenModal}
-              className="btn-primary flex items-center"
-            >
-              <FiPlus className="mr-2" /> New Transaction
-            </button>
-          )}
+              {canManage && (
+                <button
+                  onClick={handleOpenModal}
+                  className="bg-accent text-white px-8 py-4 font-black uppercase italic tracking-widest border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all rounded-lg whitespace-nowrap"
+                >
+                  <FiPlus className="inline mr-2" strokeWidth={4} /> Take Tool
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -229,8 +234,8 @@ const Transactions = () => {
               <tr className="text-left">
                 <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Tool</th>
                 <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">User</th>
-                <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Checked Out</th>
-                <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Checked In</th>
+                <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Taken Out</th>
+                <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Returned</th>
                 <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Due Date</th>
                 <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                 {canManage && (
@@ -298,12 +303,12 @@ const Transactions = () => {
                     </td>
                     {canManage && (
                       <td className="py-3 px-4">
-                        {transaction.action === 'Checked Out' && transaction.status !== 'Available' && (
+                        {transaction.action === 'Taken Out' && transaction.status !== 'Available' && (
                           <button
                             onClick={() => handleCheckIn(transaction)}
                             className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                           >
-                            <FiArrowLeft className="mr-1 h-4 w-4" /> Check In
+                            <FiArrowLeft className="mr-1 h-4 w-4" /> Return Tool
                           </button>
                         )}
                       </td>

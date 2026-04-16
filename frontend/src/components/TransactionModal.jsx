@@ -213,11 +213,11 @@ const TransactionModal = ({ onClose, onTransactionComplete }) => {
     try {
       setLoading(true);
       const response = await axios.post('/api/transactions/checkout', { ...formData, expectedReturnDate });
-      toast.success('Tool checked out successfully!');
+      toast.success('Tool taken successfully!');
       onTransactionComplete(response.data);
       onClose();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to checkout tool');
+      toast.error(error.response?.data?.message || 'Failed to take tool');
     } finally { setLoading(false); }
   };
 
@@ -238,7 +238,7 @@ const TransactionModal = ({ onClose, onTransactionComplete }) => {
             <div className="bg-primary-100 p-2 rounded-lg mr-3">
               <FiTool className="h-6 w-6 text-primary-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">New Transaction — Check Out Tool</h2>
+            <h2 className="text-xl font-bold text-gray-900">New Checkout — Take Tool</h2>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-800 p-2 rounded-lg hover:bg-gray-100">
             <FiX className="h-5 w-5" />
@@ -423,7 +423,7 @@ const TransactionModal = ({ onClose, onTransactionComplete }) => {
                     Processing...
                   </>
                 ) : (
-                  <><FiSave className="mr-2" />Check Out Tool</>
+                  <><FiSave className="mr-2" />Take Tool Now</>
                 )}
               </button>
             </div>

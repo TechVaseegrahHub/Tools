@@ -41,30 +41,30 @@ const Hero = () => {
                         {/* Brutal Badge */}
                         <div className="inline-flex items-center space-x-2 border-2 border-black px-4 py-1 font-mono-tech text-xs font-bold uppercase tracking-widest bg-[#ff0000] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-10">
                             <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                            <span>OS V2.0 / SYSTEM ACTIVE</span>
+                            <span>Easy to Use / READY NOW</span>
                         </div>
 
                         <h1 className="text-6xl md:text-8xl font-black text-black tracking-tighter leading-[0.9] mb-8 uppercase" style={{ fontFamily: 'Syncopate, sans-serif' }}>
-                            ABSOLUTE<br />
-                            <span className="text-transparent border-text" style={{ WebkitTextStroke: '2px black' }}>CONTROL.</span>
+                            MANAGE<br />
+                            <span className="text-transparent border-text" style={{ WebkitTextStroke: '2px black' }}>TOOLS EASILY.</span>
                         </h1>
 
                         <div className="pl-6 border-l-4 border-black mb-10">
                             <p className="text-xl font-mono-tech text-black font-medium leading-relaxed max-w-lg">
-                                SYSTEMATIC TOOL INVENTORY MANAGEMENT.
-                                TRACK CHECK-INS, CHECK-OUTS, AND WORKFLOWS WITH RAW PRECISION.
+                                Keep track of all your tools in one place.
+                                See who has what and where everything is, fast and simple.
                             </p>
                         </div>
 
                         <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-6">
                             <Link to="/register-org" className="w-full sm:w-auto">
                                 <button className="w-full flex items-center justify-center text-sm md:text-base px-6 py-3 bg-[#ff0000] text-white font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all duration-150 font-mono-tech">
-                                    INITIATE_FREE <FiArrowRight className="ml-2" />
+                                    Try for Free <FiArrowRight className="ml-2" />
                                 </button>
                             </Link>
                             <Link to="/login" className="w-full sm:w-auto">
                                 <button className="w-full text-sm md:text-base px-6 py-3 bg-white text-black font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] hover:bg-black hover:text-white transition-all duration-150 font-mono-tech">
-                                    AUTH_LOGIN
+                                    Log In
                                 </button>
                             </Link>
                         </div>
@@ -85,7 +85,7 @@ const Hero = () => {
                                     <div className="w-4 h-4 rounded-none border-2 border-black bg-white"></div>
                                     <div className="w-4 h-4 rounded-none border-2 border-black bg-white"></div>
                                 </div>
-                                <div className="font-mono-tech text-xs font-bold uppercase tracking-widest">/TOOLROOM/DASHBOARD</div>
+                                <div className="font-mono-tech text-xs font-bold uppercase tracking-widest">Dashboard</div>
                                 <div className="w-4 h-4 bg-black"></div>
                             </div>
 
@@ -95,12 +95,12 @@ const Hero = () => {
                                     {/* Stat Block 1 */}
                                     <div className="border-2 border-black p-3 sm:p-4 relative overflow-hidden group">
                                         <div className="absolute top-0 right-0 w-8 h-8 bg-black group-hover:bg-[#ff0000] transition-colors origin-bottom-left rotate-45 translate-x-4 -translate-y-4"></div>
-                                        <div className="font-mono-tech text-xs font-bold mb-1 sm:mb-2">/AVAILABLE</div>
+                                        <div className="font-mono-tech text-xs font-bold mb-1 sm:mb-2">READY</div>
                                         <div className="text-4xl sm:text-5xl font-black tracking-tighter" style={{ fontFamily: 'Syncopate' }}>124</div>
                                     </div>
                                     {/* Stat Block 2 */}
                                     <div className="border-2 border-black p-3 sm:p-4 bg-black text-white relative">
-                                        <div className="font-mono-tech text-xs text-gray-400 font-bold mb-1 sm:mb-2">/IN_USE</div>
+                                        <div className="font-mono-tech text-xs text-gray-400 font-bold mb-1 sm:mb-2">TAKEN</div>
                                         <div className="text-4xl sm:text-5xl font-black tracking-tighter" style={{ fontFamily: 'Syncopate' }}>48</div>
                                         <div className="absolute bottom-4 right-4 text-[#ff0000] animate-pulse">
                                             <FiActivity size={24} />
@@ -110,7 +110,7 @@ const Hero = () => {
 
                                 {/* List Block */}
                                 <div className="border-2 border-black p-4">
-                                    <h3 className="font-mono-tech text-sm font-bold uppercase border-b-2 border-black pb-2 mb-4">Live.Feed</h3>
+                                    <h3 className="font-mono-tech text-sm font-bold uppercase border-b-2 border-black pb-2 mb-4">Recent Activity</h3>
                                     <div className="space-y-4">
                                         {[1, 2, 3].map((i) => (
                                             <div key={i} className="flex justify-between items-end border-b border-dashed border-gray-300 pb-2">
@@ -118,7 +118,7 @@ const Hero = () => {
                                                     <div className="font-mono-tech text-xs text-gray-500 mb-1">ID: B-PWR-{i}0{i}</div>
                                                     <div className="font-bold uppercase tracking-tight text-sm">Bosch Power Drill</div>
                                                 </div>
-                                                <div className="font-mono-tech text-[10px] bg-black text-white px-2 py-1">CHECK_OUT</div>
+                                                <div className="font-mono-tech text-[10px] bg-black text-white px-2 py-1">TAKEN</div>
                                             </div>
                                         ))}
                                     </div>

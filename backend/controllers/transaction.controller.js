@@ -77,6 +77,9 @@ export const checkoutTool = async (req, res) => {
     });
 
     tool.status = 'Checked Out';
+    tool.isAvailable = false;
+    tool.rentedAt = new Date();
+    tool.returnedAt = null;
     await tool.save();
 
     await transaction.populate('tool', 'toolName toolId');
@@ -136,8 +139,10 @@ export const checkinTool = async (req, res) => {
       await resetOverdueToolStatus(tool._id);
     } else {
       tool.status = 'Available';
-      await tool.save();
     }
+    tool.isAvailable = true;
+    tool.returnedAt = new Date();
+    await tool.save();
 
     await checkoutTransaction.populate('tool', 'toolName toolId');
     await checkoutTransaction.populate('user', 'name email');
