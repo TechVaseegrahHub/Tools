@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { FiDownload, FiX, FiShare } from 'react-icons/fi';
+import { useLocation } from 'react-router-dom';
 
 const InstallPrompt = () => {
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [isVisible, setIsVisible] = useState(false);
     const [isIOS, setIsIOS] = useState(false);
     const [isStandalone, setIsStandalone] = useState(false);
+    const location = useLocation();
 
     useEffect(() => {
         // Detect if the app is already installed
@@ -46,12 +48,26 @@ const InstallPrompt = () => {
 
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
+        
+        if (outcome === 'accepted') {
+            localStorage.setItem('appInstalled', 'true');
+        }
 
         setDeferredPrompt(null);
         setIsVisible(false);
     };
 
-    if (!isVisible || isStandalone) return null;
+    const handleDismiss = () => {
+        sessionStorage.setItem('installPopupDismissed', 'true');
+        setIsVisible(false);
+    };
+
+    // Conditions to show popup
+    const isLoginPage = location.pathname === '/login';
+    const appInstalled = localStorage.getItem('appInstalled') === 'true';
+    const installPopupDismissed = sessionStorage.getItem('installPopupDismissed') === 'true';
+
+    if (!isVisible || isStandalone || !isLoginPage || appInstalled || installPopupDismissed) return null;
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-[9999] p-4 sm:p-6 sm:bottom-6 sm:left-auto sm:right-6 sm:max-w-md w-full pointer-events-none flex justify-center">
@@ -76,7 +92,7 @@ const InstallPrompt = () => {
                                 <p className="text-sm text-gray-500 mt-0.5 leading-snug">Install for a seamless experience</p>
                             </div>
                             <button
-                                onClick={() => setIsVisible(false)}
+                                onClick={handleDismiss}
                                 className="p-1 -mr-1 -mt-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
                                 aria-label="Close"
                             >
@@ -96,7 +112,7 @@ const InstallPrompt = () => {
                                         <span>and select <strong className="font-semibold text-gray-900">Add to Home Screen</strong></span>
                                     </div>
                                     <button
-                                        onClick={() => setIsVisible(false)}
+                                        onClick={handleDismiss}
                                         className="mt-3 w-full py-2.5 bg-black hover:bg-gray-900 text-white text-sm font-semibold rounded-xl transition-all active:scale-[0.98]"
                                     >
                                         Got it

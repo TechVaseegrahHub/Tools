@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
       (error) => {
         if (error.response?.status === 401) {
           localStorage.removeItem('token');
+          sessionStorage.removeItem('installPopupDismissed');
           delete axios.defaults.headers.common['Authorization'];
           if (logoutRef.current) logoutRef.current();
           window.location.href = '/login';
@@ -124,6 +125,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('token');
+    sessionStorage.removeItem('installPopupDismissed');
     delete axios.defaults.headers.common['Authorization'];
     toast.info('You have been logged out');
   };
