@@ -189,9 +189,9 @@ const LoginPage = () => {
             className="text-white font-black uppercase leading-[0.88] tracking-tighter mb-8"
             style={{ fontFamily: 'Syncopate, sans-serif', fontSize: 'clamp(3rem, 5vw, 5.5rem)' }}
           >
-            TOOL
+            TOOLS
             <br />
-            <span style={{ WebkitTextStroke: '2px #ff0000', color: 'transparent' }}>ROOM.</span>
+            <span style={{ WebkitTextStroke: '2px #ff0000', color: 'transparent' }}>APP.</span>
           </motion.h1>
 
           {/* Divider */}
