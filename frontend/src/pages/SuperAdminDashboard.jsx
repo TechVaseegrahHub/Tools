@@ -112,6 +112,7 @@ const UserRow = ({ user }) => {
                 <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
                     <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    <p className="text-[10px] text-emerald-600 font-mono mt-0.5">{user.whatsappNumber || 'No WhatsApp'}</p>
                 </div>
                 <span className="text-xs font-medium px-2 py-1 bg-white border border-gray-200 rounded-lg text-gray-600 flex-shrink-0">
                     {user.role}

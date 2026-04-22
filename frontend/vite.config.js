@@ -9,13 +9,49 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['favicon-32x32.png', 'apple-touch-icon.png', 'maskable-icon.png'],
       manifest: {
-        name: 'ToolRoom Management',
-        short_name: 'ToolRoom',
-        description: 'Inventory and Sales Management System',
-        theme_color: '#3b82f6',
+        name: 'Tools App Management',
+        short_name: 'ToolsApp',
+        description: 'Professional Tool and Inventory Management',
+        theme_color: '#ef4444',
+        background_color: '#000000',
         icons: [
+          {
+            src: 'favicon-16x16.png',
+            sizes: '16x16',
+            type: 'image/png'
+          },
+          {
+            src: 'favicon-32x32.png',
+            sizes: '32x32',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-72x72.png',
+            sizes: '72x72',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-96x96.png',
+            sizes: '96x96',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-128x128.png',
+            sizes: '128x128',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-144x144.png',
+            sizes: '144x144',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-152x152.png',
+            sizes: '152x152',
+            type: 'image/png'
+          },
           {
             src: 'pwa-192x192.png',
             sizes: '192x192',

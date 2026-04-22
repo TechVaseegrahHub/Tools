@@ -8,7 +8,8 @@ const UserFormModal = ({ user, onSave, onClose }) => {
         name: '',
         email: '',
         password: '',
-        role: 'Employee'
+        role: 'Employee',
+        whatsappNumber: ''
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -22,7 +23,8 @@ const UserFormModal = ({ user, onSave, onClose }) => {
                 name: user.name,
                 email: user.email,
                 password: '', // Don't pre-fill password for security
-                role: user.role
+                role: user.role,
+                whatsappNumber: user.whatsappNumber || ''
             });
         }
     }, [user, isEditMode]);
@@ -159,6 +161,32 @@ const UserFormModal = ({ user, onSave, onClose }) => {
                                     <option value="Manager">Manager</option>
                                     <option value="Admin">Admin</option>
                                 </select>
+                            </div>
+
+                            {/* WhatsApp Number */}
+                            <div className="md:col-span-2">
+                                <label htmlFor="whatsappNumber" className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                    <FiX className="mr-2 h-4 w-4 rotate-45" /> WhatsApp Number * (+91)
+                                </label>
+                                <div className="flex gap-2">
+                                    <div className="w-16 bg-gray-100 border border-gray-300 rounded-lg flex items-center justify-center font-mono text-sm text-gray-500">
+                                        +91
+                                    </div>
+                                    <input
+                                        type="text"
+                                        id="whatsappNumber"
+                                        name="whatsappNumber"
+                                        value={formData.whatsappNumber.startsWith('+91') ? formData.whatsappNumber.slice(3) : formData.whatsappNumber}
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                            setFormData(prev => ({ ...prev, whatsappNumber: val ? `+91${val}` : '' }));
+                                        }}
+                                        required
+                                        className="input-field flex-1"
+                                        placeholder="9876543210"
+                                    />
+                                </div>
+                                <p className="mt-1 text-xs text-gray-500">10-digit mobile number for India</p>
                             </div>
                         </div>
 

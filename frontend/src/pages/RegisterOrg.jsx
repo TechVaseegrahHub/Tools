@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { motion, useMotionValue, useTransform, useSpring, useScroll, AnimatePresence } from 'framer-motion';
-import { FiMail, FiLock, FiUser, FiGlobe, FiArrowLeft, FiCheckCircle, FiArrowRight, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiMail, FiLock, FiUser, FiGlobe, FiArrowLeft, FiCheckCircle, FiArrowRight, FiEye, FiEyeOff, FiPhone } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
@@ -108,6 +108,7 @@ const RegisterOrg = () => {
         adminEmail: googleUser?.email || '',
         adminPassword: '',
         confirmPassword: '',
+        whatsappNumber: '',
     });
 
     const containerRef = useRef(null);
@@ -141,7 +142,7 @@ const RegisterOrg = () => {
                     confirmPassword: '',
                 });
                 setActiveGoogleUser({ idToken: credentialResponse.credential, ...result });
-                toast.success('Google account linked! Now set your workspace and password.');
+                toast.success('Google account linked! Now set your workspace and WhatsApp number.');
             } else if (result?.role === 'SuperAdmin') {
                 navigate('/superadmin', { replace: true });
             } else {
@@ -169,11 +170,20 @@ const RegisterOrg = () => {
             return;
         }
 
+        // WhatsApp Validation (India: 10 digits)
+        const cleanPhone = form.whatsappNumber.replace(/\D/g, '');
+        if (!cleanPhone || cleanPhone.length !== 10) {
+            toast.error('Please enter a valid 10-digit WhatsApp number');
+            return;
+        }
+
+        const formattedPhone = `+91${cleanPhone}`;
+
         setLoading(true);
         try {
             let data;
             if (finalGoogleUser) {
-                data = await registerWithGoogle(finalGoogleUser.idToken, form.orgName, form.adminPassword);
+                data = await registerWithGoogle(finalGoogleUser.idToken, form.orgName, form.adminPassword, formattedPhone);
             } else {
                 if (!form.adminPassword) {
                     toast.error('Password is required');
@@ -185,6 +195,7 @@ const RegisterOrg = () => {
                     adminName: form.adminName,
                     adminEmail: form.adminEmail,
                     adminPassword: form.adminPassword,
+                    whatsappNumber: formattedPhone,
                 });
                 data = res.data;
                 localStorage.setItem('token', data.token);
@@ -428,6 +439,31 @@ const RegisterOrg = () => {
                                         onChange={handleChange}
                                         placeholder="Confirm"
                                     />
+                                </div>
+
+                                <div className="border-l-2 border-[#ff0000] pl-3 mt-6 mb-1">
+                                    <span className="text-[9px] font-black uppercase tracking-[0.25em] text-[#ff0000]">
+                                        WhatsApp Verification
+                                    </span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <div className="w-20 bg-gray-100 border-2 border-black flex items-center justify-center font-mono text-sm font-bold">
+                                        +91
+                                    </div>
+                                    <div className="flex-1">
+                                        <Field
+                                            icon={FiPhone}
+                                            name="whatsappNumber"
+                                            type="text"
+                                            required
+                                            value={form.whatsappNumber}
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                setForm(prev => ({ ...prev, whatsappNumber: val }));
+                                            }}
+                                            placeholder="9876543210"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Submit */}

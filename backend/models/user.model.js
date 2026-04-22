@@ -37,6 +37,12 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Organization',
   },
+  whatsappNumber: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+  },
   // Forgot-password OTP fields
   otpHash: { type: String },
   otpExpiry: { type: Date },

@@ -106,15 +106,18 @@ const Sidebar = ({ isOpen, onClose }) => {
 
         {/* User Profile and Logout */}
         <div className="p-4 border-t border-gray-200 bg-gray-50/30">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className={`rounded-xl p-2 border-2 border-black ${isSuperAdmin ? 'bg-black text-white' : 'bg-white text-black'}`}>
+          <div 
+            onClick={() => { navigate('/profile'); handleNavClick(); }}
+            className="flex items-center space-x-3 mb-4 cursor-pointer group hover:bg-white hover:shadow-sm p-2 rounded-xl transition-all border border-transparent hover:border-gray-100"
+          >
+            <div className={`rounded-xl p-2 border-2 border-black transition-transform group-hover:scale-105 ${isSuperAdmin ? 'bg-black text-white' : 'bg-white text-black'}`}>
               {isSuperAdmin
                 ? <FiShield className="h-5 w-5" />
                 : <FiUser className="h-5 w-5" />
               }
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-black uppercase tracking-tighter truncate">
+              <p className="text-sm font-bold text-black uppercase tracking-tighter truncate group-hover:text-primary-600 transition-colors">
                 {user?.name || 'User'}
               </p>
               <p className={`text-[10px] font-black uppercase tracking-widest truncate ${isSuperAdmin ? 'text-accent' : 'text-black/40'}`}>

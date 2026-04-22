@@ -14,6 +14,7 @@ import OrgSettings from './pages/OrgSettings';
 import SubscriptionPage from './pages/SubscriptionPage';
 import FinancePage from './pages/FinancePage';
 import Marketplace from './pages/Marketplace';
+import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/MainLayout';
 import InstallPrompt from './components/InstallPrompt';
@@ -88,6 +89,11 @@ function App() {
           <Route path="/finance" element={
             <ProtectedRoute roles={['SuperAdmin']}>
               <FinancePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute roles={['Admin', 'Manager', 'Employee', 'SuperAdmin']}>
+              <ProfilePage />
             </ProtectedRoute>
           } />
         </Route>

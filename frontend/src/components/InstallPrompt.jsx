@@ -9,8 +9,9 @@ const InstallPrompt = () => {
     const [isStandalone, setIsStandalone] = useState(false);
     const location = useLocation();
 
+    // 1. Initial detection and event listeners
     useEffect(() => {
-        // Detect if the app is already installed
+        // Detect if the app is already in standalone mode
         const standalone = window.matchMedia('(display-mode: standalone)').matches ||
             window.navigator.standalone === true;
         setIsStandalone(standalone);
@@ -23,24 +24,51 @@ const InstallPrompt = () => {
         const handleBeforeInstallPrompt = (e) => {
             e.preventDefault();
             setDeferredPrompt(e);
-            if (!standalone) {
-                // Show slightly delayed for better user experience
-                setTimeout(() => setIsVisible(true), 1500);
-            }
+            console.log('PWA: beforeinstallprompt event captured');
+        };
+
+        // Listen for successful installation (from any source)
+        const handleAppInstalled = () => {
+            console.log('PWA: App installed successfully');
+            localStorage.setItem('appInstalled', 'true');
+            setIsVisible(false);
+            setDeferredPrompt(null);
         };
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-        // For iOS, show the prompt manually if not in standalone
-        if (ios && !standalone) {
-            const timer = setTimeout(() => setIsVisible(true), 1500);
-            return () => clearTimeout(timer);
-        }
+        window.addEventListener('appinstalled', handleAppInstalled);
 
         return () => {
             window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            window.removeEventListener('appinstalled', handleAppInstalled);
         };
     }, []);
+
+    // 2. Control visibility based on route and session logic
+    useEffect(() => {
+        const isLoginPage = location.pathname === '/login';
+        const appInstalled = localStorage.getItem('appInstalled') === 'true';
+        const installPopupDismissed = sessionStorage.getItem('installPopupDismissed') === 'true';
+
+        // Conditions to show:
+        // - Must be on login page
+        // - Must NOT be already installed (standalone or localStorage flag)
+        // - Must NOT be dismissed in this session
+        // - Must have a prompt available OR be iOS
+        const shouldShow = isLoginPage && 
+                          !isStandalone && 
+                          !appInstalled && 
+                          !installPopupDismissed && 
+                          (deferredPrompt || isIOS);
+
+        if (shouldShow) {
+            // Show with a slight delay for better UX
+            const timer = setTimeout(() => setIsVisible(true), 1500);
+            return () => clearTimeout(timer);
+        } else {
+            setIsVisible(false);
+        }
+    }, [location.pathname, deferredPrompt, isStandalone, isIOS]);
 
     const handleInstallClick = async () => {
         if (isIOS) return;
@@ -62,12 +90,8 @@ const InstallPrompt = () => {
         setIsVisible(false);
     };
 
-    // Conditions to show popup
-    const isLoginPage = location.pathname === '/login';
-    const appInstalled = localStorage.getItem('appInstalled') === 'true';
-    const installPopupDismissed = sessionStorage.getItem('installPopupDismissed') === 'true';
-
-    if (!isVisible || isStandalone || !isLoginPage || appInstalled || installPopupDismissed) return null;
+    // Final guard for rendering
+    if (!isVisible) return null;
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-[9999] p-4 sm:p-6 sm:bottom-6 sm:left-auto sm:right-6 sm:max-w-md w-full pointer-events-none flex justify-center">

@@ -26,16 +26,35 @@ export const createSubscription = async (req, res) => {
     try {
         const orgId = req.user.orgId;
 
+        if (!orgId) {
+            return res.status(403).json({ message: 'No organization assigned to this user.' });
+        }
+
         // Check if the org already has an active subscription
         const org = await Organization.findById(orgId);
-        if (!org) return res.status(404).json({ message: 'Organization not found' });
+        if (!org) {
+            return res.status(404).json({ message: 'Organization not found' });
+        }
 
         if (['Basic', 'Pro', 'premium'].includes(org.subscriptionPlan) && org.subscriptionStatus === 'active') {
             return res.status(400).json({ message: 'Organization already has an active premium subscription' });
         }
 
-        const planId = req.body.plan === 'Pro' ? process.env.RAZORPAY_PRO_PLAN_ID : process.env.RAZORPAY_BASIC_PLAN_ID;
-        if (!planId && (!process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID === 'your_key_id_here')) {
+        // Logic to determine plan ID with fallbacks
+        let planId = req.body.plan === 'Pro' ? process.env.RAZORPAY_PRO_PLAN_ID : process.env.RAZORPAY_BASIC_PLAN_ID;
+        
+        // Fallback to generic RAZORPAY_PLAN_ID if specific ones are missing
+        if (!planId) {
+            planId = process.env.RAZORPAY_PLAN_ID;
+        }
+
+        // Mock check logic
+        const isMockMode = !planId || 
+                          !process.env.RAZORPAY_KEY_ID || 
+                          process.env.RAZORPAY_KEY_ID === 'your_key_id_here' || 
+                          process.env.RAZORPAY_KEY_ID.includes('your_key');
+
+        if (isMockMode) {
             // MOCK BYPASS FOR DEVELOPMENT
             console.log('[PAYMENT_MOCK] Bypassing Razorpay for development mode...');
             return res.status(200).json({
@@ -45,9 +64,15 @@ export const createSubscription = async (req, res) => {
             });
         }
 
-        if (!planId) {
+        // Ensure razorpay is initialized if we reached here
+        if (!razorpay) {
+            console.error("Razorpay instance is not initialized. Please check RAZORPAY_KEY_ID/SECRET in .env");
+            return res.status(500).json({ message: 'Payment gateway not initialized' });
+        }
+
+        if (!planId || planId === 'your_plan_id_here') {
             console.error("Razorpay plan ID is not set for the requested plan");
-            return res.status(500).json({ message: 'Payment configuration error' });
+            return res.status(500).json({ message: 'Payment configuration error: Plan ID missing' });
         }
 
         // Create a subscription on Razorpay
@@ -64,7 +89,6 @@ export const createSubscription = async (req, res) => {
         // Temporarily save the subscription ID on the org, but don't mark as active yet
         org.razorpaySubscriptionId = subscription.id;
         org.subscriptionStatus = 'created';
-        // We'll trust the verified plan from verify payload, or we could temporarily store requestedPlan
         await org.save();
 
         res.status(200).json({
@@ -73,7 +97,11 @@ export const createSubscription = async (req, res) => {
         });
     } catch (error) {
         console.error('Error creating subscription:', error);
-        res.status(500).json({ message: 'Server Error during payment initiation', error: error.message });
+        res.status(500).json({ 
+            message: 'Server Error during payment initiation', 
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
 

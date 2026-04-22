@@ -67,7 +67,8 @@ const ManageUsers = () => {
       const filtered = users.filter(user =>
         user.name?.toLowerCase().includes(term) ||
         user.email?.toLowerCase().includes(term) ||
-        user.role?.toLowerCase().includes(term)
+        user.role?.toLowerCase().includes(term) ||
+        user.whatsappNumber?.toLowerCase().includes(term)
       );
       setFilteredUsers(filtered);
     }
@@ -201,8 +202,8 @@ const ManageUsers = () => {
               <tr className="text-left">
                 <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">User</th>
                 <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">WhatsApp</th>
                 <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Role</th>
-                <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                 <th className="py-3 px-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -247,15 +248,10 @@ const ManageUsers = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-700">{user.email}</td>
+                    <td className="py-3 px-4 text-sm text-gray-700 font-mono">{user.whatsappNumber || '—'}</td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
                         {user.role}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Active
                       </span>
                     </td>
                     <td className="py-3 px-4">
@@ -333,10 +329,8 @@ const ManageUsers = () => {
                     <span className="text-gray-900 truncate ml-4 font-mono text-xs">{user.email}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-500 font-medium">Status</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-800">
-                      Active
-                    </span>
+                    <span className="text-gray-500 font-medium">WhatsApp</span>
+                    <span className="text-gray-900 font-mono text-xs">{user.whatsappNumber || '—'}</span>
                   </div>
                 </div>
 

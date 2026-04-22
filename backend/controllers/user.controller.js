@@ -18,7 +18,7 @@ export const getUsers = async (req, res) => {
 // @access  Private/Admin
 export const createUser = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, whatsappNumber } = req.body;
     const orgId = req.user.orgId;
 
     const userExists = await User.findOne({ email });
@@ -26,11 +26,19 @@ export const createUser = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    if (whatsappNumber) {
+      const phoneExists = await User.findOne({ whatsappNumber });
+      if (phoneExists) {
+        return res.status(400).json({ message: 'WhatsApp number already in use' });
+      }
+    }
+
     const user = await User.create({
       name,
       email,
       password,
       role: role || 'Employee',
+      whatsappNumber,
       orgId,
     });
 
@@ -79,11 +87,12 @@ export const updateUser = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const { name, email, role } = req.body;
+    const { name, email, role, whatsappNumber } = req.body;
 
     user.name = name || user.name;
     user.email = email || user.email;
     user.role = role || user.role;
+    user.whatsappNumber = whatsappNumber || user.whatsappNumber;
 
     const updatedUser = await user.save();
 

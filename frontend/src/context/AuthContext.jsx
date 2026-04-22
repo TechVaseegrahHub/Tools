@@ -104,9 +104,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Google register org (for new Google users who need to create an org)
-  const googleRegisterOrg = async (idToken, orgName, adminPassword) => {
+  const googleRegisterOrg = async (idToken, orgName, adminPassword, whatsappNumber) => {
     try {
-      const res = await axios.post(API_URL + 'google-register-org', { idToken, orgName, adminPassword });
+      const res = await axios.post(API_URL + 'google-register-org', { idToken, orgName, adminPassword, whatsappNumber });
 
       setUser(res.data);
       localStorage.setItem('token', res.data.token);

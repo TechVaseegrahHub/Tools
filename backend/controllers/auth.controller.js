@@ -27,9 +27,9 @@ const generateToken = (payload) => {
 // @desc    Register a new organization (public — first tenant signup)
 // @route   POST /api/auth/register-org
 export const registerOrg = async (req, res) => {
-  const { orgName, adminName, adminEmail, adminPassword } = req.body;
+  const { orgName, adminName, adminEmail, adminPassword, whatsappNumber } = req.body;
 
-  if (!orgName || !adminName || !adminEmail || !adminPassword) {
+  if (!orgName || !adminName || !adminEmail || !adminPassword || !whatsappNumber) {
     return res.status(400).json({ message: 'All fields are required' });
   }
 
@@ -49,6 +49,12 @@ export const registerOrg = async (req, res) => {
       return res.status(400).json({ message: 'Email already in use' });
     }
 
+    // Check whatsappNumber uniqueness
+    const phoneExists = await User.findOne({ whatsappNumber });
+    if (phoneExists) {
+      return res.status(400).json({ message: 'WhatsApp number already registered' });
+    }
+
     // Create the org
     const org = await Organization.create({ name: orgName, slug, isActive: true });
 
@@ -57,6 +63,7 @@ export const registerOrg = async (req, res) => {
       name: adminName,
       email: adminEmail,
       password: adminPassword,
+      whatsappNumber,
       role: 'Admin',
       orgId: org._id,
     });
@@ -81,7 +88,7 @@ export const registerOrg = async (req, res) => {
 // @desc    Register a new user (Admin creates users for their org)
 // @route   POST /api/auth/register
 export const registerUser = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, whatsappNumber } = req.body;
 
   try {
     // Check if user already exists
@@ -91,12 +98,21 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Check whatsappNumber uniqueness
+    if (whatsappNumber) {
+      const phoneExists = await User.findOne({ whatsappNumber });
+      if (phoneExists) {
+        return res.status(400).json({ message: 'WhatsApp number already in use' });
+      }
+    }
+
     // Create user — orgId comes from the logged-in Admin's orgId
     const user = await User.create({
       name,
       email,
       password,
       role: role || 'Employee',
+      whatsappNumber,
       orgId: req.user?.orgId, // scoped to caller's org
     });
 
@@ -424,9 +440,9 @@ export const googleAuth = async (req, res) => {
 // @desc    Google Register Org — create org + admin for a new Google user
 // @route   POST /api/auth/google-register-org
 export const googleRegisterOrg = async (req, res) => {
-  const { idToken, orgName, adminPassword } = req.body;
-  if (!idToken || !orgName) {
-    return res.status(400).json({ message: 'Google token and organisation name are required' });
+  const { idToken, orgName, adminPassword, whatsappNumber } = req.body;
+  if (!idToken || !orgName || !whatsappNumber) {
+    return res.status(400).json({ message: 'Google token, organisation name, and WhatsApp number are required' });
   }
 
   try {
@@ -437,6 +453,12 @@ export const googleRegisterOrg = async (req, res) => {
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return res.status(400).json({ message: 'An account with this Google email already exists. Please sign in instead.' });
+    }
+
+    // Check whatsappNumber uniqueness
+    const phoneExists = await User.findOne({ whatsappNumber });
+    if (phoneExists) {
+      return res.status(400).json({ message: 'WhatsApp number already registered' });
     }
 
     // Create org slug
@@ -454,6 +476,7 @@ export const googleRegisterOrg = async (req, res) => {
       password: adminPassword || (Math.random().toString(36).slice(-10)),
       authProvider: 'google',
       googleId,
+      whatsappNumber,
       role: 'Admin',
       orgId: org._id,
     });
