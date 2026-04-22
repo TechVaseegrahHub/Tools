@@ -9,6 +9,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
+      filename: 'manifest.json',
       includeAssets: ['favicon-32x32.png', 'apple-touch-icon.png', 'maskable-icon-v2.png'],
       manifest: {
         name: 'Tools App',
@@ -16,6 +17,11 @@ export default defineConfig({
         description: 'Professional Tool and Inventory Management',
         theme_color: '#ef4444',
         background_color: '#000000',
+        display: 'standalone',
+        orientation: 'portrait',
+        start_url: '/',
+        scope: '/',
+        id: '/',
         icons: [
           {
             src: 'favicon-16x16.png',
