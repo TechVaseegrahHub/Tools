@@ -7,19 +7,29 @@ import './index.css' // Import Tailwind styles
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { GoogleOAuthProvider } from '@react-oauth/google'
-import { registerSW } from 'virtual:pwa-register'
+// Register service worker and cleanup old ones
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    // 1. Unregister all old service workers
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(reg => {
+        reg.unregister().then(() => console.log('PWA: Old SW unregistered'));
+      });
+    });
 
-// Register service worker
-const updateSW = registerSW({
-  onNeedRefresh() {
-    if (confirm('New content available. Reload?')) {
-      updateSW(true);
-    }
-  },
-  onOfflineReady() {
-    console.log('App ready to work offline');
-  },
-})
+    // 2. Clear all caches
+    caches.keys().then(names => {
+      names.forEach(name => {
+        caches.delete(name).then(() => console.log('PWA: Cache cleared:', name));
+      });
+    });
+
+    // 3. Register the new service worker
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('PWA: Service Worker registered', reg))
+      .catch(err => console.error('PWA: Service Worker registration failed', err));
+  });
+}
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
