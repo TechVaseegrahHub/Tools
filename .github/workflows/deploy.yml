@@ -1,0 +1,50 @@
+name: Deploy Tools App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.PRIVATE_KEY }}
+          script: |
+            # Navigate to the app directory
+            # We try common paths. Update this to match your actual server path.
+            if [ -d "/var/www/apps/Tools" ]; then
+              cd /var/www/apps/Tools
+            elif [ -d "~/Tools" ]; then
+              cd ~/Tools
+            else
+              echo "Error: Tools directory not found on server."
+              exit 1
+            fi
+            
+            # Pull the latest changes
+            echo "Pulling latest code from main..."
+            git pull origin main
+            
+            # --- Backend Update ---
+            echo "Updating Backend..."
+            cd backend
+            npm install --production
+            # Restart backend with PM2
+            pm2 restart all || pm2 start server.js --name tools-backend
+            
+            # --- Frontend Update ---
+            echo "Updating Frontend..."
+            cd ../frontend
+            npm install
+            # Clear old build cache
+            rm -rf dist
+            # Build for production
+            npm run build
+            
+            echo "Deployment Successful! $(date)"
