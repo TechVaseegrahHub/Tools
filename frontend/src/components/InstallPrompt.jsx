@@ -104,7 +104,7 @@ const InstallPrompt = () => {
                     {/* App Icon Area */}
                     <div className="flex-shrink-0 relative group">
                         <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-md overflow-hidden transition-transform group-hover:scale-105 duration-300 border border-gray-100">
-                            <img src="/pwa-192x192.png" alt="ToolRoom App Icon" className="w-full h-full object-cover" />
+                            <img src="/pwa-192x192-v2.png" alt="Tools App Icon" className="w-full h-full object-cover" />
                         </div>
                     </div>
 
@@ -112,7 +112,7 @@ const InstallPrompt = () => {
                     <div className="flex-1 min-w-0 pt-0.5">
                         <div className="flex justify-between items-start">
                             <div>
-                                <h3 className="text-base font-bold text-gray-950 truncate tracking-tight">ToolRoom App</h3>
+                                <h3 className="text-base font-bold text-gray-950 truncate tracking-tight">Tools App</h3>
                                 <p className="text-sm text-gray-500 mt-0.5 leading-snug">Install for a seamless experience</p>
                             </div>
                             <button

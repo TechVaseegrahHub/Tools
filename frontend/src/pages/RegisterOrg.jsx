@@ -203,7 +203,7 @@ const RegisterOrg = () => {
             }
 
             setSuccess(true);
-            toast.success(`Welcome to ToolRoom, ${data.org?.name}!`);
+            toast.success(`Welcome to Tools App, ${data.org?.name}!`);
             setTimeout(() => navigate('/'), 2000);
         } catch (err) {
             toast.error(err.response?.data?.message || err.message || 'Registration failed');
@@ -315,7 +315,7 @@ const RegisterOrg = () => {
                 {/* Mobile logo */}
                 <div className="lg:hidden absolute top-6 left-6">
                     <span className="font-black text-xl uppercase tracking-tighter" style={{ fontFamily: 'Syncopate, sans-serif' }}>
-                        TOOLROOM
+                        TOOLS APP
                     </span>
                 </div>
 

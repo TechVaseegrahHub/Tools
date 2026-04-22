@@ -112,7 +112,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', res.data.token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
 
-      toast.success(`Welcome to ToolRoom, ${res.data.org?.name}!`);
+      toast.success(`Welcome to Tools App, ${res.data.org?.name}!`);
       return res.data;
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Registration failed';

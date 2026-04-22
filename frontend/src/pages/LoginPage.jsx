@@ -241,7 +241,7 @@ const LoginPage = () => {
         {/* Mobile logo */}
         <div className="lg:hidden absolute top-6 left-6">
           <span className="font-black text-xl uppercase tracking-tighter" style={{ fontFamily: 'Syncopate, sans-serif' }}>
-            TOOLROOM
+            TOOLS APP
           </span>
         </div>
 
@@ -283,7 +283,7 @@ const LoginPage = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-white border-2 border-black py-4 pl-11 pr-4 text-black placeholder:text-gray-300 font-mono text-sm focus:outline-none focus:border-[#ff0000] focus:ring-0 transition-colors"
-                  placeholder="operator@toolroom.com"
+                  placeholder="operator@toolsapp.com"
                 />
               </div>
             </div>

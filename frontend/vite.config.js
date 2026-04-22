@@ -9,9 +9,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon-32x32.png', 'apple-touch-icon.png', 'maskable-icon.png'],
+      includeAssets: ['favicon-32x32.png', 'apple-touch-icon.png', 'maskable-icon-v2.png'],
       manifest: {
-        name: 'Tools App Management',
+        name: 'Tools App',
         short_name: 'ToolsApp',
         description: 'Professional Tool and Inventory Management',
         theme_color: '#ef4444',
@@ -53,19 +53,19 @@ export default defineConfig({
             type: 'image/png'
           },
           {
-            src: 'pwa-192x192.png',
+            src: 'pwa-192x192-v2.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'pwa-512x512-v2.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'maskable-icon.png',
+            src: 'maskable-icon-v2.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
