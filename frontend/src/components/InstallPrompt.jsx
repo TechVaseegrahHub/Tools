@@ -104,7 +104,7 @@ const InstallPrompt = () => {
                     {/* App Icon Area */}
                     <div className="flex-shrink-0 relative group">
                         <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-md overflow-hidden transition-transform group-hover:scale-105 duration-300 border border-gray-100">
-                            <img src="/icons/icon-192.png" alt="Tools App Icon" className="w-full h-full object-cover" />
+                            <img src="/icons/icon-192-v2.png" alt="Tools App Icon" className="w-full h-full object-cover" />
                         </div>
                     </div>
 

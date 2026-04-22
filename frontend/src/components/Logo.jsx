@@ -13,7 +13,7 @@ const Logo = ({ isSuperAdmin = false, className = '' }) => {
         `}
             >
                 <img 
-                    src="/icons/icon-192.png" 
+                    src="/icons/icon-192-v2.png" 
                     alt="Tools App Logo" 
                     className="w-full h-full object-cover"
                 />
